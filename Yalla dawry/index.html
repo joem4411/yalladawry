@@ -1,0 +1,2851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dawra Ramadaneya 26' - Tournament Elite</title>
+    
+    <!-- LIBRARIES -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- QR SCANNER LIBRARY -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
+    
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --gold-bright: #FFD700;
+            --bg-deep: #030303;
+            --glass-bg: rgba(10, 10, 10, 0.75);
+            --border-white: rgba(255, 255, 255, 0.05);
+            --border-gold: rgba(212, 175, 55, 0.25);
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            color: #f8fafc;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 0% 100%, rgba(59, 130, 246, 0.03) 0%, transparent 30%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px);
+            border: 1px solid var(--border-white);
+            border-radius: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card:hover { 
+            border-color: var(--border-gold);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold) 0%, #AA8C2C 100%);
+            color: #000;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-gold:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(212, 175, 55, 0.4); }
+
+        .btn-outline {
+            border: 1px solid var(--border-white);
+            color: var(--text-muted);
+            font-weight: 800;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .btn-outline:hover {
+            border-color: var(--gold);
+            color: white;
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .input-field {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #fff;
+            padding: 0.9rem 1.25rem;
+            border-radius: 1rem;
+            width: 100%;
+            outline: none;
+            font-size: 0.95rem;
+            transition: 0.3s;
+        }
+        .input-field:focus { 
+            border-color: var(--gold); 
+            background: rgba(0,0,0,0.8);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideIn 0.5s ease; }
+
+        @keyframes slideIn { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .nav-btn { 
+            color: var(--text-muted); 
+            font-weight: 900; 
+            font-size: 0.7rem; 
+            letter-spacing: 0.15em; 
+            text-transform: uppercase; 
+            cursor: pointer; 
+            transition: 0.3s;
+        }
+        .nav-btn.active { color: var(--gold); border-bottom: 2px solid var(--gold); border-radius: 0; }
+
+        .badge { 
+            padding: 0.35rem 0.85rem; 
+            border-radius: 2rem; 
+            font-size: 0.65rem; 
+            font-weight: 900; 
+            text-transform: uppercase; 
+            border: 1px solid transparent; 
+        }
+        .badge-player { background: rgba(212, 175, 55, 0.12); color: var(--gold); border-color: var(--border-gold); }
+        .badge-spectator { background: rgba(148, 163, 184, 0.05); color: #94a3b8; border-color: rgba(148, 163, 184, 0.1); }
+        .badge-organizer { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.2); }
+        .badge-validity { background: rgba(139, 92, 246, 0.1); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.2); }
+
+        #notification-hub { 
+            position: fixed; top: 2rem; right: 2rem; z-index: 10000; 
+            display: flex; flex-direction: column; gap: 0.75rem; width: 380px; pointer-events: none; 
+        }
+        .animate-toast { animation: toastIn 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards, toastOut 0.5s 3s forwards; pointer-events: auto; }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+        /* Scanner specific styles to override default library styles */
+        #reader { border: none !important; border-radius: 1.5rem; overflow: hidden; background: #000; }
+        #reader__dashboard_section_csr span { color: white !important; font-family: 'Inter', sans-serif; font-weight: bold; }
+        #reader__dashboard_section_swaplink { color: var(--gold) !important; text-decoration: none; font-weight: bold; }
+        #reader button { background: var(--gold) !important; color: black !important; border: none !important; padding: 10px 20px !important; border-radius: 10px !important; font-weight: bold !important; cursor: pointer; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+    </style>
+</head>
+<body class="pb-24">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-xl transition-opacity duration-500 p-4">
+        <div class="glass-card w-full max-w-md p-8 md:p-10 flex flex-col items-center border-white/10 shadow-2xl">
+            <div class="w-24 h-16 bg-transparent flex items-center justify-center overflow-hidden transition-all mb-4">
+                <img class="max-w-full max-h-full w-auto h-auto object-contain" src="https://i.ibb.co/L6Wv99m/yalla-dawry-logo.png" onerror="this.style.display='none'">
+            </div>
+            <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter mb-1">Dawra <span class="text-gold">Ramadaneya</span></h2>
+            <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mb-8 flex items-center justify-center gap-2">
+                Access Control Portal
+                <span class="cloud-status-dot w-2 h-2 rounded-full bg-yellow-500 animate-pulse" title="Connecting to Cloud..."></span>
+            </p>
+            
+            <form id="login-form" class="w-full space-y-5" onsubmit="authLogic.login(event)">
+                <div>
+                    <label class="text-[10px] uppercase font-black text-zinc-500 mb-2 block ml-1">Username</label>
+                    <input type="text" id="login-user" required class="input-field" placeholder="Enter username">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-black text-zinc-500 mb-2 block ml-1">Password</label>
+                    <input type="password" id="login-pass" required class="input-field" placeholder="••••••••">
+                </div>
+                
+                <div id="login-error" class="hidden bg-red-500/10 border border-red-500/30 text-red-500 text-[10px] font-black uppercase text-center p-3 rounded-xl mt-2">
+                    Invalid Credentials Provided
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="btn-gold w-full py-4 rounded-xl text-[11px] flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        Secure Login
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN SUITE WRAPPER -->
+    <div id="suite-content" class="hidden opacity-0 transition-opacity duration-500">
+
+        <!-- GLOBAL HEADER -->
+        <header class="sticky top-0 z-[100] bg-black/80 backdrop-blur-3xl border-b border-white/5">
+            <div class="max-w-[1700px] mx-auto px-4 md:px-10 py-3 md:py-0 md:h-24 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3 md:gap-6">
+                    <div class="group relative">
+                        <div class="w-16 h-12 md:w-24 md:h-16 bg-transparent flex items-center justify-center overflow-hidden transition-all">
+                            <img id="header-logo" class="max-w-full max-h-full w-auto h-auto object-contain" src="https://i.ibb.co/L6Wv99m/yalla-dawry-logo.png" onerror="this.style.display='none'; document.getElementById('logo-alt').style.display='flex'">
+                            <span id="logo-alt" class="hidden text-gold font-black text-xl md:text-2xl italic">YD</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <h1 class="font-black text-lg md:text-2xl text-white uppercase italic tracking-tighter">Dawra <span class="text-gold">Ramadaneya</span> <span class="text-[10px] tracking-widest text-zinc-500 not-italic ml-1 md:ml-2 font-normal">26'</span></h1>
+                            <button id="btn-back-hub" onclick="appNav.showHub()" class="hidden bg-white/10 hover:bg-gold hover:text-black text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-colors">← Back to Hub</button>
+                        </div>
+                        <p class="text-[8px] md:text-[9px] text-zinc-500 font-bold uppercase tracking-widest flex items-center gap-2 mt-1">
+                            Powered by Yalla Dawry
+                            <span class="cloud-status-dot w-2 h-2 rounded-full bg-yellow-500 animate-pulse" title="Connecting to Cloud..."></span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4 md:gap-10 w-full md:w-auto justify-between md:justify-end border-t border-white/5 pt-3 md:border-none md:pt-0">
+                    <div class="hidden lg:flex flex-col items-end">
+                        <div class="flex items-center gap-3 mb-1">
+                            <p class="text-[9px] text-zinc-500 font-black uppercase tracking-[0.2em]">Venue Local Time</p>
+                        </div>
+                        <div id="live-clock" class="text-base md:text-xl font-black text-white font-mono tracking-widest bg-zinc-900/40 px-4 md:px-5 py-2 rounded-xl border border-white/5 shadow-inner">12:00:00 PM</div>
+                    </div>
+                    <div class="hidden sm:block h-12 w-px bg-white/5"></div>
+                    <div class="flex gap-6 md:gap-12 w-full sm:w-auto justify-between items-center">
+                        <div class="text-left sm:text-right">
+                            <p class="text-[8px] md:text-[9px] text-zinc-500 font-black uppercase mb-1">Participants</p>
+                            <p id="stat-count" class="text-base md:text-xl text-white font-mono font-black">0</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[8px] md:text-[9px] text-zinc-500 font-black uppercase mb-1">Total Revenue</p>
+                            <p id="stat-revenue" class="text-base md:text-xl text-gold font-mono font-black">0 EGP</p>
+                        </div>
+                        <!-- Unified Logout -->
+                        <div class="pl-2 md:pl-6 border-l border-white/5">
+                            <button onclick="authLogic.logout()" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 px-3 md:px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-colors shrink-0 flex items-center gap-2">
+                                <span class="hidden md:inline">Logout</span>
+                                <svg class="w-5 h-5 md:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-[1700px] mx-auto p-4 md:p-10">
+
+            <!-- 1. THE HUB SCREEN -->
+            <div id="screen-hub" class="max-w-5xl mx-auto mt-10 md:mt-20">
+                <h2 class="text-center text-3xl md:text-5xl font-black text-white uppercase italic tracking-tighter mb-12">Suite <span class="text-gold">Modules</span></h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
+                    
+                    <!-- App 1: Passes Generator -->
+                    <div onclick="appNav.showApp('passes')" class="glass-card p-10 flex flex-col items-center justify-center text-center cursor-pointer group hover:bg-white/[0.02]">
+                        <div class="w-20 h-20 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-black text-white uppercase tracking-widest mb-2">Passes Generator</h3>
+                        <p class="text-[10px] text-zinc-500 uppercase font-bold">Registration, PDF Export, Squads & Analytics</p>
+                    </div>
+
+                    <!-- App 2: Attendance -->
+                    <div onclick="appNav.showApp('attendance')" class="glass-card p-10 flex flex-col items-center justify-center text-center cursor-pointer group hover:bg-white/[0.02] border-gold/30 shadow-[0_0_30px_rgba(212,175,55,0.1)]">
+                        <div class="w-20 h-20 rounded-full bg-gold/10 border border-gold/20 text-gold flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-black text-white uppercase tracking-widest mb-2">Attendance Engine</h3>
+                        <p class="text-[10px] text-zinc-500 uppercase font-bold">Live QR Scanner & Manual Door Access</p>
+                    </div>
+
+                    <!-- App 3: Tournament Manager -->
+                    <div onclick="appNav.showApp('tournament')" class="glass-card p-10 flex flex-col items-center justify-center text-center cursor-pointer group hover:bg-white/[0.02] border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.1)]">
+                        <div class="w-20 h-20 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-black text-white uppercase tracking-widest mb-2">Tournament Manager</h3>
+                        <p class="text-[10px] text-zinc-500 uppercase font-bold">Groups, Match Logic, Scores & Stats</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 2. APP: PASSES GENERATOR -->
+            <div id="screen-passes" class="hidden app-screen">
+                <!-- SEARCH -->
+                <div class="mb-6 md:mb-12 flex flex-col lg:flex-row gap-4 md:gap-6 items-center">
+                    <div class="relative flex-1 w-full group">
+                        <input type="text" id="global-search" dir="auto" oninput="passes.search()" placeholder="Search Name, NID, Team..." class="input-field pl-12 md:pl-16 py-4 md:py-5 border-white/10 shadow-2xl transition-all group-hover:border-gold/30 text-sm md:text-base">
+                        <svg class="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-5 h-5 md:w-6 md:h-6 text-zinc-600 group-focus-within:text-gold transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <select id="pass-filter" onchange="ui.refresh()" class="input-field w-full lg:w-auto px-4 py-4 md:py-5 border-white/10 shadow-2xl text-sm md:text-base appearance-none cursor-pointer">
+                        <option value="All">All Categories</option>
+                        <option value="Player">Players Only</option>
+                        <option value="Spectator">Spectators Only</option>
+                        <option value="Organizer">Organizers Only</option>
+                        <option value="Guest">Guests Only</option>
+                    </select>
+                    <button onclick="ui.toggleBulk()" class="btn-outline w-full lg:w-auto px-6 md:px-8 py-4 md:py-5 rounded-xl md:rounded-2xl md:h-full border-dashed border-zinc-700 text-xs md:text-sm">Bulk Import (Excel/CSV)</button>
+                </div>
+
+                <!-- NAVIGATION -->
+                <nav class="flex gap-2 md:gap-4 mb-8 md:mb-12 overflow-x-auto pb-4" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <button onclick="showTab('passes', 'passes')" id="nav-passes" class="nav-btn active px-6 md:px-10 py-3 md:py-5 rounded-xl md:rounded-2xl glass-card border-none whitespace-nowrap">Registrations</button>
+                    <button onclick="showTab('passes', 'teams')" id="nav-teams" class="nav-btn px-6 md:px-10 py-3 md:py-5 rounded-xl md:rounded-2xl glass-card border-none whitespace-nowrap">Squads</button>
+                    <button onclick="showTab('passes', 'analytics')" id="nav-analytics" class="nav-btn px-6 md:px-10 py-3 md:py-5 rounded-xl md:rounded-2xl glass-card border-none whitespace-nowrap">Revenue Analytics</button>
+                    <button onclick="showTab('passes', 'settings')" id="nav-settings" class="nav-btn px-6 md:px-10 py-3 md:py-5 rounded-xl md:rounded-2xl glass-card border-none whitespace-nowrap">Administration</button>
+                </nav>
+
+                <!-- REGISTRATIONS TAB -->
+                <section id="tab-passes-passes" class="tab-content active">
+                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 md:gap-10">
+                        <div class="xl:col-span-4">
+                            <div class="glass-card p-6 md:p-10 sticky top-4 md:top-32">
+                                <div class="flex items-center justify-between mb-6 md:mb-8">
+                                    <h3 id="form-title" class="text-xs font-black text-white uppercase tracking-[0.2em]">Participant Enrollment</h3>
+                                    <div class="w-8 h-[1px] bg-gold/30"></div>
+                                </div>
+
+                                <form onsubmit="passes.handleRegister(event)" id="main-reg-form" class="space-y-4 md:space-y-6">
+                                    <input type="hidden" id="edit-uid">
+                                    <div>
+                                        <label class="text-[10px] uppercase font-black text-zinc-500 mb-2 block ml-1">Full Legal Name</label>
+                                        <input type="text" id="reg-name" required class="input-field" placeholder="Full name" dir="auto">
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+                                        <div>
+                                            <label class="text-[10px] uppercase font-black text-zinc-500 mb-2 block ml-1">Category</label>
+                                            <select id="reg-role" class="input-field" onchange="passes.updateUIVisibility()">
+                                                <option value="Player">Player (2 Free Guests)</option>
+                                                <option value="Spectator">Spectator (Paid)</option>
+                                                <option value="Organizer">Organizer</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] uppercase font-black text-zinc-500 mb-2 block ml-1">Validity</label>
+                                            <select id="reg-validity" class="input-field">
+                                                <option value="Full Tournament">Full Tournament</option>
+                                                <option value="Day 1">Day 1</option>
+                                                <option value="Day 2">Day 2</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+                                        <div>
+                                            <label class="text-[10px] uppercase font-black text-zinc-500 mb-2 block ml-1">Phone</label>
+                                            <input type="tel" id="reg-phone" required class="input-field" placeholder="01x...">
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] uppercase font-black text-zinc-500 mb-2 block ml-1">NID</label>
+                                            <input type="text" id="reg-nid" required class="input-field" placeholder="National ID">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+                                        <div>
+                                            <label class="text-[10px] uppercase font-black text-zinc-500 mb-2 block ml-1">Assigned Squad</label>
+                                            <select id="reg-team" class="input-field"></select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] uppercase font-black text-zinc-500 mb-2 block ml-1">Payment Status</label>
+                                            <select id="reg-payment" class="input-field">
+                                                <option value="N/A">Not Applicable</option>
+                                                <option value="Free">Free Ticket</option>
+                                                <option value="Paid">Paid (Money Collected)</option>
+                                                <option value="Unpaid">Unpaid (Collect at Door)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-4">
+                                        <button type="submit" id="submit-btn" class="btn-gold w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-[11px]">Generate Pass</button>
+                                        <p id="price-hint" class="text-center text-[10px] font-black text-zinc-500 uppercase mt-4 tracking-widest"></p>
+                                        <button type="button" onclick="ui.cancelEdit()" id="cancel-edit-btn" class="hidden w-full py-3 text-zinc-600 font-black text-[10px] uppercase hover:text-white mt-2">Discard</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="xl:col-span-8">
+                            <div class="glass-card">
+                                <div class="p-6 md:p-8 border-b border-white/5 flex flex-wrap justify-between items-center bg-black/20 gap-4">
+                                    <h3 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Master Participant Roster</h3>
+                                    <span id="list-count" class="bg-gold/10 text-gold text-[10px] px-3 py-1 rounded-full font-black">0 TOTAL</span>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left min-w-[700px]">
+                                        <thead class="text-[9px] uppercase text-zinc-500 font-black border-b border-white/5 bg-zinc-900/30">
+                                            <tr>
+                                                <th class="px-6 md:px-8 py-5 md:py-6">Participant</th>
+                                                <th class="px-6 md:px-8 py-5 md:py-6">Status/Validity</th>
+                                                <th class="px-6 md:px-8 py-5 md:py-6">NID Reference</th>
+                                                <th class="px-6 md:px-8 py-5 md:py-6 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pass-table-body" class="divide-y divide-white/5"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ANALYTICS TAB -->
+                <section id="tab-passes-analytics" class="tab-content">
+                    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-10">
+                        <div class="glass-card p-5 md:p-8 border-l-4 border-l-gold">
+                            <p class="text-[8px] md:text-[10px] font-black text-zinc-500 uppercase mb-2">Total Players</p>
+                            <h2 id="ana-players" class="text-2xl md:text-4xl font-black text-white">0</h2>
+                        </div>
+                        <div class="glass-card p-5 md:p-8 border-l-4 border-l-blue-500">
+                            <p class="text-[8px] md:text-[10px] font-black text-zinc-500 uppercase mb-2">Paid Spectators</p>
+                            <h2 id="ana-spectators" class="text-2xl md:text-4xl font-black text-white">0</h2>
+                        </div>
+                        <div class="glass-card p-5 md:p-8 border-l-4 border-l-green-500">
+                            <p class="text-[8px] md:text-[10px] font-black text-zinc-500 uppercase mb-2">Total Collected</p>
+                            <h2 id="ana-revenue" class="text-2xl md:text-4xl font-black text-gold">0 EGP</h2>
+                        </div>
+                        <div class="glass-card p-5 md:p-8 border-l-4 border-l-purple-500">
+                            <p class="text-[8px] md:text-[10px] font-black text-zinc-500 uppercase mb-2">Total Guests</p>
+                            <h2 id="ana-guests" class="text-2xl md:text-4xl font-black text-white">0</h2>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TEAMS TAB -->
+                <section id="tab-passes-teams" class="tab-content">
+                    <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 md:gap-10">
+                        <div class="xl:col-span-1">
+                            <div class="glass-card p-6 md:p-8 sticky top-4 md:top-32">
+                                <h3 class="text-xs font-black text-white uppercase mb-6 tracking-widest">Create Squad</h3>
+                                <div class="space-y-4">
+                                    <input type="text" id="team-name-input" placeholder="Squad Name" class="input-field" dir="auto">
+                                    <button onclick="teams.add()" class="btn-gold w-full py-4 rounded-xl md:rounded-2xl text-[11px]">Register Squad</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="teams-grid" class="xl:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-6 md:gap-8"></div>
+                    </div>
+                </section>
+
+                <!-- SETTINGS TAB -->
+                <section id="tab-passes-settings" class="tab-content">
+                    <div class="max-w-4xl mx-auto space-y-6 md:space-y-10">
+                        <div class="glass-card p-6 md:p-10">
+                            <h3 class="text-xs font-black text-white uppercase border-b border-white/5 pb-4 md:pb-6 mb-6 md:mb-8 tracking-widest">Brand & Pricing</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-10">
+                                <div class="flex flex-col gap-4">
+                                    <label class="text-[10px] font-black text-zinc-500 block uppercase">Main Organizer Logo</label>
+                                    <input type="file" id="logo-uploader" accept="image/*" class="hidden" onchange="system.uploadLogo(this)">
+                                    <div class="flex gap-2">
+                                        <button onclick="document.getElementById('logo-uploader').click()" class="btn-gold flex-1 py-4 rounded-xl text-[10px]">Upload Logo</button>
+                                        <button onclick="system.removeLogo()" class="bg-red-900/30 border border-red-900/50 text-red-500 w-16 md:w-20 rounded-xl text-[10px] font-black uppercase hover:bg-red-900/50 transition-all" title="Remove Logo">X</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-black text-zinc-500 block mb-3 uppercase">Spectator Entrance Fee (EGP)</label>
+                                    <input type="number" id="set-price-spectator" onchange="system.updateConfig()" class="input-field font-mono text-gold text-xl md:text-2xl" value="500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-6 md:p-10">
+                            <h3 class="text-xs font-black text-white uppercase border-b border-white/5 pb-4 md:pb-6 mb-6 md:mb-8 tracking-widest">Sponsor Management</h3>
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="text-[10px] font-black text-zinc-500 block mb-3 uppercase">Upload Sponsor Logos (Display on PDF)</label>
+                                    <input type="file" id="sponsor-uploader" accept="image/*" class="hidden" multiple onchange="system.uploadSponsors(this)">
+                                    <button onclick="document.getElementById('sponsor-uploader').click()" class="btn-outline w-full py-4 rounded-xl text-[10px]">Add Sponsors</button>
+                                </div>
+
+                                <!-- SPONSOR INDIVIDUAL LIST -->
+                                <div id="sponsor-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 mt-4 border-t border-white/5"></div>
+
+                                <!-- SPONSOR LIVE PREVIEW -->
+                                <div id="sponsor-preview-container" class="hidden border-t border-white/5 pt-6 mt-6">
+                                    <div class="bg-black/50 border border-white/5 rounded-xl p-4 md:p-6 relative flex flex-col items-center justify-center min-h-[140px] overflow-hidden">
+                                        <p class="absolute top-2 left-3 md:top-3 md:left-4 text-[8px] font-black text-zinc-600 uppercase tracking-widest z-10">PDF Bottom Preview (Scale approx)</p>
+                                        <div class="w-full max-w-[280px] border-t border-white/10 pt-4 mt-4 flex flex-wrap items-center justify-center gap-2" id="sponsor-preview-box">
+                                            <!-- Preview Logos Auto-injected here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-6 md:p-10">
+                            <h3 class="text-xs font-black text-white uppercase border-b border-white/5 pb-4 md:pb-6 mb-6 md:mb-8 tracking-widest">System Backup</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-10">
+                                <button onclick="system.exportBackup()" class="btn-outline w-full py-4 rounded-xl text-[10px]">Download .JSON Backup</button>
+                                <div class="relative">
+                                    <input type="file" id="import-json" accept=".json" class="hidden" onchange="system.importBackup(this)">
+                                    <button onclick="document.getElementById('import-json').click()" class="btn-outline w-full py-4 rounded-xl text-[10px]">Restore from .JSON</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-6 md:p-10">
+                            <h3 class="text-xs font-black text-white uppercase border-b border-white/5 pb-4 md:pb-6 mb-6 md:mb-8 tracking-widest text-red-500">Danger Zone</h3>
+                            <button onclick="system.reset()" class="w-full py-4 bg-red-600/20 text-red-500 text-[10px] font-black uppercase hover:bg-red-600 hover:text-white transition-all rounded-xl border border-red-900/30">Wipe All System Data</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- 3. APP: ATTENDANCE SCANNER -->
+            <div id="screen-attendance" class="hidden app-screen">
+                <nav class="flex gap-2 md:gap-4 mb-8 md:mb-12 overflow-x-auto pb-4" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <button onclick="showTab('attendance', 'scanner')" id="nav-scanner" class="nav-btn active px-6 md:px-10 py-3 md:py-5 rounded-xl md:rounded-2xl glass-card border-none text-gold font-black shadow-[0_0_20px_rgba(212,175,55,0.15)] whitespace-nowrap">Live QR Scanner</button>
+                    <button onclick="showTab('attendance', 'manual')" id="nav-manual" class="nav-btn px-6 md:px-10 py-3 md:py-5 rounded-xl md:rounded-2xl glass-card border-none whitespace-nowrap">Manual List Override</button>
+                </nav>
+
+                <!-- SCANNER TAB -->
+                <section id="tab-attendance-scanner" class="tab-content active">
+                    <div class="max-w-3xl mx-auto">
+                        
+                        <!-- Camera Area -->
+                        <div id="scanner-container" class="glass-card p-6 md:p-10 flex flex-col items-center justify-center">
+                            <div class="w-full relative">
+                                <div id="reader" class="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black min-h-[300px] md:min-h-[500px]"></div>
+                            </div>
+                            <div class="mt-8 text-center space-y-4 w-full max-w-sm">
+                                <button id="btn-start-scan" onclick="scannerLogic.start()" class="btn-gold w-full py-4 rounded-xl text-[11px]">Start Camera</button>
+                                <button id="btn-stop-scan" onclick="scannerLogic.stop()" class="btn-outline w-full py-4 rounded-xl text-[11px] hidden">Stop Camera</button>
+                                <p class="text-[9px] text-zinc-500 font-bold uppercase tracking-widest leading-relaxed">Hold PDF pass QR code up to camera.<br>Scanning is automatic.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SCAN RESULT MODAL -->
+                <div id="scan-modal" class="fixed inset-0 z-[300] hidden items-center justify-center bg-black/95 backdrop-blur-xl p-4 transition-opacity duration-300">
+                    <div class="glass-card w-full max-w-md p-6 md:p-8 text-center shadow-2xl relative">
+                        
+                        <!-- Success Content -->
+                        <div id="scan-success" class="hidden flex-col items-center w-full">
+                            <div class="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(34,197,94,0.4)] mx-auto">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <h2 class="text-2xl font-black text-white uppercase tracking-tighter mb-1" id="scan-name" dir="auto">MOHAMED AHMED</h2>
+                            <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-6" id="scan-details">PLAYER • SQUAD ALPHA</p>
+                            
+                            <div class="w-full bg-zinc-900/80 border border-white/10 rounded-2xl p-5 space-y-3 mb-6 shadow-inner text-left">
+                                <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                                    <span class="text-[10px] font-black text-zinc-500 uppercase">System ID</span>
+                                    <span class="text-[11px] font-mono text-white" id="scan-uid"></span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                                    <span class="text-[10px] font-black text-zinc-500 uppercase">National ID (NID)</span>
+                                    <span class="text-[11px] font-mono text-white" id="scan-nid"></span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                                    <span class="text-[10px] font-black text-zinc-500 uppercase">Phone</span>
+                                    <span class="text-[11px] font-mono text-white" id="scan-phone"></span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                                    <span class="text-[10px] font-black text-zinc-500 uppercase">Validity</span>
+                                    <span class="text-[11px] font-mono text-white" id="scan-validity"></span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                                    <span class="text-[10px] font-black text-zinc-500 uppercase">Issue Date</span>
+                                    <span class="text-[11px] font-mono text-white" id="scan-issued"></span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                                    <span class="text-[10px] font-black text-zinc-500 uppercase">Payment Status</span>
+                                    <div class="flex items-center gap-2">
+                                        <div id="scan-payment" class="text-[10px] font-black uppercase px-3 py-1 rounded-full"></div>
+                                        <button id="scan-toggle-payment-btn" class="bg-gold/20 hover:bg-gold text-gold hover:text-black border border-gold/30 px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-colors hidden">Change</button>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center pt-1">
+                                    <span class="text-[10px] font-black text-zinc-500 uppercase">System Action</span>
+                                    <span id="scan-action-text" class="text-[10px] font-black text-green-500 uppercase bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">Marked as Entered</span>
+                                </div>
+                            </div>
+                            <button onclick="scannerLogic.resume()" class="btn-gold w-full py-4 rounded-2xl text-[12px] tracking-widest shadow-lg">Close & Scan Next</button>
+                        </div>
+
+                        <!-- Action Required Content (Double Scan) -->
+                        <div id="scan-action-required" class="hidden flex-col items-center w-full">
+                            <div class="w-20 h-20 bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(234,179,8,0.4)] mx-auto">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            </div>
+                            <h2 class="text-2xl font-black text-white uppercase tracking-tighter mb-2">Already Scanned!</h2>
+                            <p class="text-[11px] text-yellow-500 font-bold uppercase tracking-widest mb-2">Current Status: <span id="scan-warn-status" class="text-white"></span></p>
+                            <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-6 border-b border-white/5 pb-4 w-full" id="scan-warn-name"></p>
+                            
+                            <div class="w-full space-y-3">
+                                <button onclick="scannerLogic.forceStatus('Entered')" class="w-full py-4 bg-green-500/10 hover:bg-green-500/20 text-green-500 border border-green-500/30 rounded-xl text-[11px] font-black uppercase transition-all">Action: Mark as Entered</button>
+                                <button onclick="scannerLogic.forceStatus('Quit')" class="w-full py-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 rounded-xl text-[11px] font-black uppercase transition-all">Action: Mark as Quit</button>
+                                <button onclick="scannerLogic.forceStatus('Pending')" class="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-[11px] font-black uppercase transition-all">Reset to Pending (Remove)</button>
+                            </div>
+                            
+                            <button onclick="scannerLogic.resume()" class="btn-outline w-full py-4 rounded-xl text-[11px] tracking-widest mt-6 bg-transparent border-white/10 hover:border-white/30">Cancel & Close</button>
+                        </div>
+
+                        <!-- Error Content -->
+                        <div id="scan-error" class="hidden flex-col items-center w-full">
+                            <div class="w-20 h-20 bg-red-600/20 text-red-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(220,38,38,0.4)] mx-auto">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </div>
+                            <h2 class="text-2xl font-black text-white uppercase tracking-tighter mb-4">Pass Revoked / Invalid</h2>
+                            <p class="text-[11px] text-red-400 font-bold uppercase tracking-widest mb-8 px-4 leading-relaxed">This QR code does not belong to any active participant. It may have been revoked or deleted.</p>
+                            <button onclick="scannerLogic.resume()" class="btn-outline w-full py-4 rounded-2xl text-[12px] tracking-widest bg-red-500/5 hover:bg-red-500/20 hover:border-red-500 hover:text-red-500">Dismiss & Try Again</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MANUAL OVERRIDE TAB (Old Tournament Day) -->
+                <section id="tab-attendance-manual" class="tab-content">
+                    <div class="glass-card">
+                        <div class="p-6 md:p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center bg-black/20 gap-4 md:gap-6">
+                            <div class="w-full md:w-auto">
+                                <h3 class="text-xs font-black text-white uppercase tracking-widest mb-4">Door Operations & Check-In</h3>
+                                <div class="flex gap-2 overflow-x-auto pb-2" id="event-filters" style="scrollbar-width: none; -ms-overflow-style: none;">
+                                    <button onclick="eventDay.setFilter('All')" data-filter="All" class="event-filter-btn px-4 py-2 text-[10px] font-black uppercase rounded-lg bg-white/10 text-white whitespace-nowrap transition-colors">All</button>
+                                    <button onclick="eventDay.setFilter('Pending')" data-filter="Pending" class="event-filter-btn px-4 py-2 text-[10px] font-black uppercase rounded-lg text-zinc-500 hover:bg-white/5 whitespace-nowrap transition-colors">Pending Action</button>
+                                    <button onclick="eventDay.setFilter('Entered')" data-filter="Entered" class="event-filter-btn px-4 py-2 text-[10px] font-black uppercase rounded-lg text-zinc-500 hover:bg-white/5 whitespace-nowrap transition-colors">Entered</button>
+                                    <button onclick="eventDay.setFilter('Quit')" data-filter="Quit" class="event-filter-btn px-4 py-2 text-[10px] font-black uppercase rounded-lg text-zinc-500 hover:bg-white/5 whitespace-nowrap transition-colors">Quit</button>
+                                    <button onclick="eventDay.setFilter('Paid')" data-filter="Paid" class="event-filter-btn px-4 py-2 text-[10px] font-black uppercase rounded-lg text-zinc-500 hover:bg-white/5 whitespace-nowrap transition-colors">Paid</button>
+                                    <button onclick="eventDay.setFilter('Unpaid')" data-filter="Unpaid" class="event-filter-btn px-4 py-2 text-[10px] font-black uppercase rounded-lg text-zinc-500 hover:bg-white/5 whitespace-nowrap transition-colors">Unpaid</button>
+                                </div>
+                            </div>
+                            <div class="relative w-full md:w-[350px] group shrink-0">
+                                <input type="text" id="event-search" dir="auto" oninput="eventDay.search()" placeholder="Search Name, Phone, UID, Squad..." class="input-field pl-12 py-3 bg-zinc-900 border-white/10 text-xs shadow-inner">
+                                <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left min-w-[800px]">
+                                <thead class="text-[9px] uppercase text-zinc-500 font-black border-b border-white/5 bg-zinc-900/30">
+                                    <tr>
+                                        <th class="px-6 md:px-8 py-4 md:py-5">Participant Details</th>
+                                        <th class="px-6 md:px-8 py-4 md:py-5">Category & Squad</th>
+                                        <th class="px-6 md:px-8 py-4 md:py-5">Financial Status</th>
+                                        <th class="px-6 md:px-8 py-4 md:py-5">Access Control</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="event-table-body" class="divide-y divide-white/5"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- 4. APP: TOURNAMENT MANAGER -->
+            <div id="screen-tournament" class="hidden app-screen">
+                <nav class="flex gap-2 md:gap-4 mb-8 md:mb-12 overflow-x-auto pb-4" style="scrollbar-width: none; -ms-overflow-style: none;">
+                    <button onclick="showTab('tournament', 'groups')" id="nav-groups" class="nav-btn active px-6 md:px-10 py-3 md:py-5 rounded-xl md:rounded-2xl glass-card border-none text-purple-500 font-black shadow-[0_0_20px_rgba(168,85,247,0.15)] whitespace-nowrap">Groups & Standings</button>
+                    <button onclick="showTab('tournament', 'matches')" id="nav-matches" class="nav-btn px-6 md:px-10 py-3 md:py-5 rounded-xl md:rounded-2xl glass-card border-none whitespace-nowrap">Matches & Results</button>
+                    <button onclick="showTab('tournament', 'stats')" id="nav-stats" class="nav-btn px-6 md:px-10 py-3 md:py-5 rounded-xl md:rounded-2xl glass-card border-none whitespace-nowrap">Player Statistics</button>
+                </nav>
+
+                <!-- TAB: GROUPS & STANDINGS -->
+                <section id="tab-tournament-groups" class="tab-content active">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-xl font-black text-white uppercase tracking-widest">Group Stages</h2>
+                        <button onclick="tourneyUI.openCreateGroupModal()" class="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase transition-colors shadow-[0_0_15px_rgba(168,85,247,0.4)]">+ Create Group</button>
+                    </div>
+                    
+                    <div id="tourney-groups-container" class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <!-- Groups Rendered Here -->
+                    </div>
+                </section>
+
+                <!-- TAB: MATCHES -->
+                <section id="tab-tournament-matches" class="tab-content">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+                        <h2 class="text-xl font-black text-white uppercase tracking-widest">Match Schedule</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="tourneyLogic.generateKnockouts('Quarter-Final')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-4 py-3 rounded-xl text-[9px] font-black uppercase transition-colors border border-blue-600/30">Auto-Gen QF</button>
+                            <button onclick="tourneyLogic.generateKnockouts('Semi-Final')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-4 py-3 rounded-xl text-[9px] font-black uppercase transition-colors border border-blue-600/30">Auto-Gen SF</button>
+                            <button onclick="tourneyLogic.generateKnockouts('Final')" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-4 py-3 rounded-xl text-[9px] font-black uppercase transition-colors border border-blue-600/30">Auto-Gen Finals</button>
+                            <button onclick="tourneyUI.openCreateMatchModal()" class="btn-gold px-6 py-3 rounded-xl text-[10px] font-black uppercase ml-2">+ Manual Match</button>
+                        </div>
+                    </div>
+
+                    <div id="tourney-matches-container" class="space-y-4">
+                        <!-- Matches Rendered Here -->
+                    </div>
+                </section>
+
+                <!-- TAB: PLAYER STATS -->
+                <section id="tab-tournament-stats" class="tab-content">
+                    <div class="glass-card max-w-4xl mx-auto">
+                        <div class="p-8 border-b border-white/5 flex items-center gap-4 bg-black/20">
+                            <div class="w-12 h-12 bg-gold/10 text-gold rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518-4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-black text-white uppercase tracking-widest">Top Goalscorers</h2>
+                                <p class="text-[10px] text-zinc-500 font-bold uppercase">Tournament Golden Boot Race</p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="text-[9px] uppercase text-zinc-500 font-black border-b border-white/5 bg-zinc-900/30">
+                                    <tr>
+                                        <th class="px-8 py-5">Rank</th>
+                                        <th class="px-8 py-5">Player Name</th>
+                                        <th class="px-8 py-5">Squad</th>
+                                        <th class="px-8 py-5 text-right">Goals</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tourney-stats-body" class="divide-y divide-white/5">
+                                    <!-- Stats Rendered Here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+
+        <!-- BULK MODAL (PASSES) -->
+        <div id="modal-bulk" class="fixed inset-0 bg-black/98 z-[1000] hidden items-center justify-center p-4 sm:p-6 backdrop-blur-3xl">
+            <div class="glass-card w-full max-w-4xl p-6 md:p-12 max-h-[90vh] overflow-y-auto">
+                <h2 class="text-lg md:text-xl font-black text-white uppercase mb-4">Excel Bulk Import</h2>
+                <p class="text-[9px] md:text-[10px] text-zinc-500 uppercase font-black mb-4">Copy these columns from Excel and paste below:</p>
+                <div class="bg-zinc-900 border border-white/5 p-3 rounded-lg flex flex-wrap gap-2 md:gap-4 mb-6 text-[8px] md:text-[9px] font-mono text-gold uppercase tracking-widest">
+                    <span>Name</span> • <span>Phone</span> • <span>Role</span> • <span>Validity</span> • <span>NID</span> • <span>Team</span>
+                </div>
+                <textarea id="bulk-input" class="input-field h-48 md:h-64 font-mono text-xs mb-6 whitespace-pre overflow-x-auto" placeholder="Paste your Excel rows here..." dir="auto"></textarea>
+                
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="ui.toggleBulk()" class="w-full sm:flex-1 py-4 md:py-5 text-[10px] md:text-[11px] font-black text-zinc-600 uppercase hover:text-white transition-colors">Cancel</button>
+                    <button onclick="passes.handleBulk()" class="btn-gold w-full sm:flex-[2] py-4 md:py-5 rounded-xl md:rounded-2xl text-[10px] md:text-[11px]">Process Import</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GUEST MODAL (PASSES) -->
+        <div id="modal-guests" class="fixed inset-0 bg-black/98 z-[1000] hidden items-center justify-center p-4 sm:p-6 backdrop-blur-3xl">
+            <div class="glass-card w-full max-w-xl p-6 md:p-12 max-h-[90vh] overflow-y-auto">
+                <h2 class="text-lg md:text-xl font-black text-white uppercase mb-2">Guest Manifest</h2>
+                <p id="guest-host-name" class="text-[9px] md:text-[10px] text-gold font-bold uppercase mb-6 md:mb-8"></p>
+                <div class="space-y-4 md:space-y-6" id="guest-inputs-container"></div>
+                <div class="flex flex-col sm:flex-row gap-4 pt-8 md:pt-10">
+                    <button onclick="ui.closeGuests()" class="w-full sm:flex-1 py-4 md:py-5 text-[10px] md:text-[11px] font-black text-zinc-600 uppercase hover:text-white transition-colors">Discard</button>
+                    <button id="save-guests-btn" class="btn-gold w-full sm:flex-[2] py-4 md:py-5 rounded-xl md:rounded-2xl text-[10px] md:text-[11px]">Save & Authorize</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CREATE GROUP MODAL (TOURNEY) -->
+        <div id="modal-create-group" class="fixed inset-0 bg-black/98 z-[1000] hidden items-center justify-center p-4 sm:p-6 backdrop-blur-3xl">
+            <div class="glass-card w-full max-w-md p-8">
+                <h2 class="text-xl font-black text-white uppercase mb-6">Create New Group</h2>
+                <input type="text" id="tourney-group-name" class="input-field mb-6" placeholder="e.g. Group A">
+                <div class="flex gap-4">
+                    <button onclick="tourneyUI.closeModals()" class="flex-1 py-4 text-[10px] font-black text-zinc-500 uppercase hover:text-white">Cancel</button>
+                    <button onclick="tourneyLogic.createGroup()" class="btn-gold flex-1 py-4 rounded-xl text-[10px]">Create</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADD TEAM TO GROUP MODAL (TOURNEY) -->
+        <div id="modal-add-team" class="fixed inset-0 bg-black/98 z-[1000] hidden items-center justify-center p-4 sm:p-6 backdrop-blur-3xl">
+            <div class="glass-card w-full max-w-md p-8">
+                <h2 class="text-xl font-black text-white uppercase mb-2">Assign Squad</h2>
+                <p id="assign-group-name" class="text-[10px] text-purple-400 font-bold uppercase mb-6"></p>
+                <input type="hidden" id="assign-group-id">
+                
+                <select id="tourney-team-select" class="input-field mb-6">
+                    <!-- Available teams injected here -->
+                </select>
+
+                <div class="flex gap-4">
+                    <button onclick="tourneyUI.closeModals()" class="flex-1 py-4 text-[10px] font-black text-zinc-500 uppercase hover:text-white">Cancel</button>
+                    <button onclick="tourneyLogic.addTeamToGroup()" class="bg-purple-600 hover:bg-purple-500 text-white flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-colors">Assign Team</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CREATE MATCH MODAL (TOURNEY) -->
+        <div id="modal-create-match" class="fixed inset-0 bg-black/98 z-[1000] hidden items-center justify-center p-4 sm:p-6 backdrop-blur-3xl">
+            <div class="glass-card w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto">
+                <h2 class="text-xl font-black text-white uppercase mb-6">Schedule Match</h2>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-[9px] uppercase font-black text-zinc-500 mb-2 block">Tournament Stage</label>
+                        <select id="match-stage" class="input-field" onchange="tourneyUI.handleStageChange()">
+                            <option value="Group Stage">Group Stage</option>
+                            <option value="Round of 16">Round of 16</option>
+                            <option value="Quarter-Final">Quarter-Final</option>
+                            <option value="Semi-Final">Semi-Final</option>
+                            <option value="Final">Final</option>
+                        </select>
+                    </div>
+
+                    <div id="match-group-container">
+                        <label class="text-[9px] uppercase font-black text-zinc-500 mb-2 block">Select Group</label>
+                        <select id="match-group" class="input-field" onchange="tourneyUI.populateMatchTeams()">
+                            <!-- Groups injected here -->
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[9px] uppercase font-black text-zinc-500 mb-2 block">Team 1 (Home)</label>
+                            <select id="match-team1" class="input-field"></select>
+                        </div>
+                        <div>
+                            <label class="text-[9px] uppercase font-black text-zinc-500 mb-2 block">Team 2 (Away)</label>
+                            <select id="match-team2" class="input-field"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 mt-8">
+                    <button onclick="tourneyUI.closeModals()" class="flex-1 py-4 text-[10px] font-black text-zinc-500 uppercase hover:text-white">Cancel</button>
+                    <button onclick="tourneyLogic.createMatch()" class="btn-gold flex-[2] py-4 rounded-xl text-[10px]">Generate Match</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MATCH RESULT EDITOR MODAL (TOURNEY) -->
+        <div id="modal-match-editor" class="fixed inset-0 bg-black/98 z-[1000] hidden items-center justify-center p-4 sm:p-6 backdrop-blur-3xl">
+            <div class="glass-card w-full max-w-2xl p-6 md:p-8 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center border-b border-white/5 pb-4 mb-6">
+                    <h2 class="text-lg font-black text-white uppercase">Match Center</h2>
+                    <span id="editor-match-stage" class="text-[9px] font-black text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20"></span>
+                </div>
+                
+                <input type="hidden" id="editor-match-id">
+
+                <!-- Score Editor -->
+                <div class="flex justify-center items-center gap-6 md:gap-10 mb-8 bg-zinc-900/50 p-6 rounded-2xl border border-white/5 relative">
+                    <div class="text-center flex-1">
+                        <p id="editor-t1-name" class="text-xs md:text-sm font-black text-white uppercase mb-4 h-8 flex items-center justify-center"></p>
+                        <input type="number" min="0" id="editor-t1-score" class="w-20 md:w-24 h-20 md:h-24 bg-black border border-white/10 rounded-2xl text-center text-4xl font-black text-gold outline-none focus:border-gold transition-colors" value="0">
+                    </div>
+                    <div class="text-2xl font-black text-zinc-700">-</div>
+                    <div class="text-center flex-1">
+                        <p id="editor-t2-name" class="text-xs md:text-sm font-black text-white uppercase mb-4 h-8 flex items-center justify-center"></p>
+                        <input type="number" min="0" id="editor-t2-score" class="w-20 md:w-24 h-20 md:h-24 bg-black border border-white/10 rounded-2xl text-center text-4xl font-black text-gold outline-none focus:border-gold transition-colors" value="0">
+                    </div>
+                </div>
+
+                <!-- Goal Scorers Section -->
+                <div class="mb-8">
+                    <h3 class="text-[10px] font-black text-zinc-500 uppercase mb-4 tracking-widest">Register Goalscorers (Must Match Score)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- Team 1 Scorers -->
+                        <div class="space-y-3">
+                            <div class="flex gap-2">
+                                <select id="editor-t1-player" class="input-field py-2 text-[10px]"></select>
+                                <button onclick="tourneyLogic.addEvent(1)" class="bg-white/10 hover:bg-white/20 text-white px-4 rounded-lg font-black text-[14px]">+</button>
+                            </div>
+                            <div id="editor-t1-events" class="space-y-2 max-h-32 overflow-y-auto pr-2"></div>
+                        </div>
+
+                        <!-- Team 2 Scorers -->
+                        <div class="space-y-3">
+                            <div class="flex gap-2">
+                                <select id="editor-t2-player" class="input-field py-2 text-[10px]"></select>
+                                <button onclick="tourneyLogic.addEvent(2)" class="bg-white/10 hover:bg-white/20 text-white px-4 rounded-lg font-black text-[14px]">+</button>
+                            </div>
+                            <div id="editor-t2-events" class="space-y-2 max-h-32 overflow-y-auto pr-2"></div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Match MVP Selection -->
+                <div class="mb-6 border-t border-white/5 pt-6">
+                    <h3 class="text-[10px] font-black text-zinc-500 uppercase mb-3 tracking-widest text-center">Match MVP</h3>
+                    <select id="editor-match-mvp" class="input-field py-3 text-xs text-center mx-auto block w-full max-w-sm"></select>
+                </div>
+
+                <div class="flex items-center gap-3 bg-red-500/5 border border-red-500/10 p-4 rounded-xl mb-6 cursor-pointer" onclick="document.getElementById('editor-completed').click()">
+                    <input type="checkbox" id="editor-completed" class="w-5 h-5 accent-red-500 cursor-pointer">
+                    <label class="text-[11px] font-black text-red-500 uppercase cursor-pointer select-none">Blow Full-Time Whistle (Lock Final Score)</label>
+                </div>
+
+                <div class="flex gap-4">
+                    <button onclick="tourneyUI.cancelMatchEditor()" class="flex-1 py-4 text-[10px] font-black text-zinc-500 uppercase hover:text-white">Cancel</button>
+                    <button onclick="tourneyLogic.saveMatch()" class="btn-gold flex-[2] py-4 rounded-xl text-[10px]">Verify & Save Data</button>
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- END APP CONTENT WRAPPER -->
+
+    <div id="notification-hub"></div>
+
+    <!-- FIREBASE CLOUD DATABASE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // IMPORTANT: TO HOST THIS APP YOURSELF, REPLACE THIS CONFIG WITH YOUR FIREBASE PROJECT CONFIG
+        let firebaseConfig = {
+            apiKey: "AIzaSyA-U6uG0hFs_UJDNdqECsAkmecCXjoiurE",
+            authDomain: "yalla-dawry-44a37.firebaseapp.com",
+            projectId: "yalla-dawry-44a37",
+            storageBucket: "yalla-dawry-44a37.firebasestorage.app",
+            messagingSenderId: "325725405223",
+            appId: "1:325725405223:web:bc73758c014191d52c8e02",
+            measurementId: "G-RWB08MXX77"
+        };
+        let appId = "yalla-dawry-44a37";
+
+        // Keep compatibility for preview environments
+        if (typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config);
+        if (typeof __app_id !== 'undefined') appId = __app_id;
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let DB = {
+            passes: [],
+            teams: [],
+            sponsors: [],
+            tournament: {
+                groups: [], // { id, name, teams: [] }
+                matches: [] // { id, stage, groupId, team1, team2, score1, score2, status, events: [{playerUid, playerName, team, type}] }
+            },
+            config: { 
+                orgName: "Dawra Ramadaneya 26'", 
+                logo: "https://i.ibb.co/L6Wv99m/yalla-dawry-logo.png", 
+                spectatorPrice: 500
+            }
+        };
+
+        // HELPER: Auto-compress images to keep database fast and within limits
+        const compressImage = (dataUrl, maxWidth = 250) => {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if(w > maxWidth) {
+                        h = Math.round((h * maxWidth) / w);
+                        w = maxWidth;
+                    }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compresses to 70% JPEG
+                }
+                img.src = dataUrl;
+            });
+        };
+
+        // --- NEW APP NAVIGATION LOGIC ---
+        const appNav = {
+            showHub: () => {
+                document.querySelectorAll('.app-screen').forEach(el => el.classList.add('hidden'));
+                document.getElementById('screen-hub').classList.remove('hidden');
+                document.getElementById('btn-back-hub').classList.add('hidden');
+                scannerLogic.stop(); // Stop camera if active
+            },
+            showApp: (appId) => {
+                document.getElementById('screen-hub').classList.add('hidden');
+                document.querySelectorAll('.app-screen').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`screen-${appId}`).classList.remove('hidden');
+                document.getElementById('btn-back-hub').classList.remove('hidden');
+                
+                // Initialize default tabs based on app
+                if(appId === 'passes') showTab('passes', 'passes');
+                if(appId === 'attendance') showTab('attendance', 'scanner');
+                if(appId === 'tournament') showTab('tournament', 'groups');
+            }
+        };
+
+        // --- NEW LOGIN & AUTH LOGIC ---
+        const authLogic = {
+            users: {
+                'jonathan': 'Joe@1234',
+                'paula': 'Paula@1234'
+            },
+            check: () => {
+                const isLoggedIn = sessionStorage.getItem('dawra_logged_in');
+                if (isLoggedIn === 'true') {
+                    authLogic.launchSuite();
+                } else {
+                    document.getElementById('login-screen').classList.remove('hidden');
+                }
+            },
+            login: (e) => {
+                e.preventDefault();
+                const u = document.getElementById('login-user').value.trim().toLowerCase();
+                const p = document.getElementById('login-pass').value.trim();
+                
+                if (authLogic.users[u] === p) {
+                    sessionStorage.setItem('dawra_logged_in', 'true');
+                    sessionStorage.setItem('dawra_current_user', u);
+                    document.getElementById('login-error').classList.add('hidden');
+                    authLogic.launchSuite();
+                } else {
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
+            },
+            logout: () => {
+                if(confirm("Are you sure you want to log out?")) {
+                    sessionStorage.removeItem('dawra_logged_in');
+                    sessionStorage.removeItem('dawra_current_user');
+                    location.reload();
+                }
+            },
+            launchSuite: () => {
+                const loginScreen = document.getElementById('login-screen');
+                const appContent = document.getElementById('suite-content');
+                loginScreen.classList.add('opacity-0');
+                setTimeout(() => {
+                    loginScreen.classList.add('hidden');
+                    appContent.classList.remove('hidden');
+                    appNav.showHub();
+                    setTimeout(() => appContent.classList.remove('opacity-0'), 50);
+                }, 500);
+            }
+        };
+
+        // --- TOURNAMENT MANAGER LOGIC ---
+        const tourneyLogic = {
+            createGroup: () => {
+                const name = document.getElementById('tourney-group-name').value.trim();
+                if(name) {
+                    DB.tournament.groups.push({
+                        id: 'G' + Date.now(),
+                        name: name,
+                        teams: []
+                    });
+                    system.save();
+                    tourneyUI.closeModals();
+                    ui.notify("Group Created");
+                }
+            },
+            deleteGroup: (id) => {
+                if(confirm("Delete this group permanently? Matches will NOT be deleted.")) {
+                    DB.tournament.groups = DB.tournament.groups.filter(g => g.id !== id);
+                    system.save();
+                }
+            },
+            addTeamToGroup: () => {
+                const gId = document.getElementById('assign-group-id').value;
+                const team = document.getElementById('tourney-team-select').value;
+                if(gId && team) {
+                    const g = DB.tournament.groups.find(x => x.id === gId);
+                    if(g && !g.teams.includes(team)) {
+                        g.teams.push(team);
+                        system.save();
+                        tourneyUI.closeModals();
+                        ui.notify(`${team} added to ${g.name}`);
+                    }
+                }
+            },
+            removeTeamFromGroup: (groupId, team) => {
+                if(confirm(`Remove ${team} from this group?`)) {
+                    const g = DB.tournament.groups.find(x => x.id === groupId);
+                    if(g) {
+                        g.teams = g.teams.filter(t => t !== team);
+                        system.save();
+                    }
+                }
+            },
+            generateGroupMatches: (groupId) => {
+                const g = DB.tournament.groups.find(x => x.id === groupId);
+                if(g.teams.length < 2) return ui.notify("Need at least 2 teams in the group!");
+                
+                let count = 0;
+                for(let i=0; i<g.teams.length; i++) {
+                    for(let j=i+1; j<g.teams.length; j++) {
+                        const exists = DB.tournament.matches.find(m => m.groupId === groupId && m.stage === 'Group Stage' && 
+                            ((m.team1 === g.teams[i] && m.team2 === g.teams[j]) || (m.team1 === g.teams[j] && m.team2 === g.teams[i])));
+                        
+                        if(!exists) {
+                            DB.tournament.matches.push({
+                                id: 'M' + Date.now() + Math.floor(Math.random()*1000),
+                                stage: 'Group Stage',
+                                groupId: groupId,
+                                team1: g.teams[i],
+                                team2: g.teams[j],
+                                score1: 0,
+                                score2: 0,
+                                status: 'pending',
+                                events: []
+                            });
+                            count++;
+                        }
+                    }
+                }
+                system.save();
+                if(count > 0) ui.notify(`${count} matches generated for ${g.name}`);
+                else ui.notify("All round-robin matches already exist!");
+            },
+            generateKnockouts: (stage) => {
+                if(stage === 'Quarter-Final') {
+                    if(DB.tournament.groups.length < 4) return ui.notify("Need exactly 4 groups to auto-generate Quarter-Finals.");
+                    
+                    const g0 = tourneyLogic.getGroupStandings(DB.tournament.groups[0].id);
+                    const g1 = tourneyLogic.getGroupStandings(DB.tournament.groups[1].id);
+                    const g2 = tourneyLogic.getGroupStandings(DB.tournament.groups[2].id);
+                    const g3 = tourneyLogic.getGroupStandings(DB.tournament.groups[3].id);
+                    
+                    if(g0.length<2 || g1.length<2 || g2.length<2 || g3.length<2) return ui.notify("Not enough teams assigned to groups to determine Top 2.");
+
+                    const pushMatch = (t1, t2) => {
+                        DB.tournament.matches.push({
+                            id: 'M'+Date.now()+Math.floor(Math.random()*1000), stage: 'Quarter-Final', groupId: null,
+                            team1: t1, team2: t2, score1: 0, score2: 0, status: 'pending', events: []
+                        });
+                    };
+                    
+                    // Standard crossing: 1A v 2B, 1C v 2D, 1B v 2A, 1D v 2C
+                    pushMatch(g0[0].team, g1[1].team);
+                    pushMatch(g2[0].team, g3[1].team);
+                    pushMatch(g1[0].team, g0[1].team);
+                    pushMatch(g3[0].team, g2[1].team);
+                    
+                    system.save();
+                    ui.notify("Quarter-Finals Generated!");
+
+                } else if (stage === 'Semi-Final') {
+                    const qfMatches = DB.tournament.matches.filter(m => m.stage === 'Quarter-Final' && m.status === 'completed');
+                    if(qfMatches.length !== 4) return ui.notify("Need exactly 4 COMPLETED Quarter-Final matches to generate Semi-Finals.");
+                    
+                    const getW = (m) => {
+                        if(m.score1 === m.score2) { ui.notify(`TIE DETECTED in QF: ${m.team1} vs ${m.team2}. Please edit match score to break tie.`); return null; }
+                        return m.score1 > m.score2 ? m.team1 : m.team2;
+                    };
+                    
+                    const w1 = getW(qfMatches[0]), w2 = getW(qfMatches[1]), w3 = getW(qfMatches[2]), w4 = getW(qfMatches[3]);
+                    if(!w1 || !w2 || !w3 || !w4) return;
+
+                    DB.tournament.matches.push({ id: 'M'+Date.now()+1, stage: 'Semi-Final', groupId: null, team1: w1, team2: w2, score1: 0, score2: 0, status: 'pending', events: [] });
+                    DB.tournament.matches.push({ id: 'M'+Date.now()+2, stage: 'Semi-Final', groupId: null, team1: w3, team2: w4, score1: 0, score2: 0, status: 'pending', events: [] });
+                    system.save();
+                    ui.notify("Semi-Finals Generated!");
+
+                } else if (stage === 'Final') {
+                    const sfMatches = DB.tournament.matches.filter(m => m.stage === 'Semi-Final' && m.status === 'completed');
+                    if(sfMatches.length !== 2) return ui.notify("Need exactly 2 COMPLETED Semi-Final matches to generate Finals.");
+                    
+                    const getW = (m) => {
+                        if(m.score1 === m.score2) { ui.notify(`TIE DETECTED in SF: ${m.team1} vs ${m.team2}. Please edit match score to break tie.`); return null; }
+                        return m.score1 > m.score2 ? m.team1 : m.team2;
+                    };
+                    const getL = (m) => {
+                        return m.score1 > m.score2 ? m.team2 : m.team1;
+                    };
+                    
+                    const sf1_w = getW(sfMatches[0]), sf1_l = getL(sfMatches[0]);
+                    const sf2_w = getW(sfMatches[1]), sf2_l = getL(sfMatches[1]);
+                    
+                    if(!sf1_w || !sf2_w) return;
+                    
+                    // 3rd Place Match
+                    DB.tournament.matches.push({ id: 'M'+Date.now()+1, stage: '3rd Place', groupId: null, team1: sf1_l, team2: sf2_l, score1: 0, score2: 0, status: 'pending', events: [] });
+                    // Grand Final
+                    DB.tournament.matches.push({ id: 'M'+Date.now()+2, stage: 'Final', groupId: null, team1: sf1_w, team2: sf2_w, score1: 0, score2: 0, status: 'pending', events: [] });
+                    system.save();
+                    ui.notify("Finals & 3rd Place Match Generated!");
+                }
+            },
+            createMatch: () => {
+                const stage = document.getElementById('match-stage').value;
+                const gId = stage === 'Group Stage' ? document.getElementById('match-group').value : null;
+                const t1 = document.getElementById('match-team1').value;
+                const t2 = document.getElementById('match-team2').value;
+
+                if(t1 === t2) return ui.notify("A team cannot play itself!");
+                if(!t1 || !t2) return ui.notify("Please select both teams.");
+
+                DB.tournament.matches.push({
+                    id: 'M' + Date.now(),
+                    stage: stage,
+                    groupId: gId,
+                    team1: t1,
+                    team2: t2,
+                    score1: 0,
+                    score2: 0,
+                    status: 'pending',
+                    events: []
+                });
+                system.save();
+                tourneyUI.closeModals();
+                ui.notify("Match Scheduled");
+            },
+            deleteMatch: (id) => {
+                if(confirm("Delete this match permanently?")) {
+                    DB.tournament.matches = DB.tournament.matches.filter(m => m.id !== id);
+                    system.save();
+                }
+            },
+            toggleMatchStatus: (mId) => {
+                const match = DB.tournament.matches.find(m => m.id === mId);
+                if(!match) return;
+                
+                if(match.status === 'pending') {
+                    // Strict Validation Before Marking Completed
+                    const ev1 = match.events.filter(e => e.team === match.team1).length;
+                    const ev2 = match.events.filter(e => e.team === match.team2).length;
+                    if(match.score1 !== ev1 || match.score2 !== ev2) {
+                        return ui.notify(`Cannot End Match! Please click "Edit" and ensure goalscorers match the score (${match.score1}-${match.score2}).`);
+                    }
+                    match.status = 'completed';
+                    ui.notify("Match Ended! Standings & Stats Updated.");
+                } else {
+                    match.status = 'pending';
+                    ui.notify("Match Reopened.");
+                }
+                system.save();
+            },
+            // Temporary events holder while editing
+            currentMatchEvents: [], 
+            addEvent: (teamNum) => {
+                const selectId = teamNum === 1 ? 'editor-t1-player' : 'editor-t2-player';
+                const el = document.getElementById(selectId);
+                const pUid = el.value;
+                if(!pUid) return ui.notify("Please select a player first!");
+                
+                const pName = el.options[el.selectedIndex].text;
+                
+                // Get EXACT team name from database, not from screen text to avoid CSS uppercase mismatch
+                const mId = document.getElementById('editor-match-id').value;
+                const match = DB.tournament.matches.find(m => m.id === mId);
+                if (!match) return;
+                const exactTeamName = teamNum === 1 ? match.team1 : match.team2;
+
+                tourneyLogic.currentMatchEvents.push({
+                    id: 'E'+Date.now() + Math.random(),
+                    playerUid: pUid,
+                    playerName: pName,
+                    team: exactTeamName,
+                    type: 'goal'
+                });
+                tourneyUI.renderMatchEvents();
+            },
+            removeEvent: (eventId) => {
+                tourneyLogic.currentMatchEvents = tourneyLogic.currentMatchEvents.filter(e => e.id !== eventId);
+                tourneyUI.renderMatchEvents();
+            },
+            saveMatch: () => {
+                const mId = document.getElementById('editor-match-id').value;
+                const match = DB.tournament.matches.find(m => m.id === mId);
+                if(match) {
+                    const t1s = parseInt(document.getElementById('editor-t1-score').value) || 0;
+                    const t2s = parseInt(document.getElementById('editor-t2-score').value) || 0;
+                    const ev1 = tourneyLogic.currentMatchEvents.filter(e => e.team === match.team1).length;
+                    const ev2 = tourneyLogic.currentMatchEvents.filter(e => e.team === match.team2).length;
+                    
+                    // Strict Validation for EXACT matches (not more, not less)
+                    if(t1s !== ev1 || t2s !== ev2) {
+                        return ui.notify(`DATA ERROR: Goalscorers do not match score! (${match.team1}: ${t1s} goals, ${ev1} scorers | ${match.team2}: ${t2s} goals, ${ev2} scorers)`);
+                    }
+
+                    match.score1 = t1s;
+                    match.score2 = t2s;
+                    match.events = [...tourneyLogic.currentMatchEvents];
+                    
+                    // Save MVP
+                    const mvpUid = document.getElementById('editor-match-mvp').value;
+                    if(mvpUid) {
+                        const el = document.getElementById('editor-match-mvp');
+                        match.mvp = {
+                            uid: mvpUid,
+                            name: el.options[el.selectedIndex].text.split(' (')[0] // Extract name before team
+                        };
+                    } else {
+                        match.mvp = null;
+                    }
+
+                    system.save();
+                    tourneyUI.closeModals();
+                    ui.notify("Match Data Verified & Saved");
+                }
+            },
+            getGroupStandings: (groupId) => {
+                const g = DB.tournament.groups.find(x => x.id === groupId);
+                if(!g) return [];
+
+                let standings = g.teams.map(t => ({ team: t, p:0, w:0, d:0, l:0, gf:0, ga:0, gd:0, pts:0 }));
+                
+                const gMatches = DB.tournament.matches.filter(m => m.groupId === groupId && m.status === 'completed');
+                
+                gMatches.forEach(m => {
+                    let s1 = standings.find(s => s.team === m.team1);
+                    let s2 = standings.find(s => s.team === m.team2);
+                    
+                    if(s1 && s2) {
+                        s1.p++; s2.p++;
+                        s1.gf += m.score1; s1.ga += m.score2;
+                        s2.gf += m.score2; s2.ga += m.score1;
+                        
+                        if(m.score1 > m.score2) { s1.w++; s2.l++; s1.pts += 3; }
+                        else if(m.score2 > m.score1) { s2.w++; s1.l++; s2.pts += 3; }
+                        else { s1.d++; s2.d++; s1.pts += 1; s2.pts += 1; }
+                    }
+                });
+
+                standings.forEach(s => s.gd = s.gf - s.ga);
+                
+                // Sort by Points > GD > GF
+                standings.sort((a,b) => {
+                    if(b.pts !== a.pts) return b.pts - a.pts;
+                    if(b.gd !== a.gd) return b.gd - a.gd;
+                    return b.gf - a.gf;
+                });
+
+                return standings;
+            }
+        };
+
+        const tourneyUI = {
+            currentMatchFilter: 'All',
+            setMatchFilter: (f) => {
+                tourneyUI.currentMatchFilter = f;
+                tourneyUI.renderMatches();
+            },
+            refresh: () => {
+                tourneyUI.renderGroups();
+                tourneyUI.renderMatches();
+                tourneyUI.renderStats();
+            },
+            renderGroups: () => {
+                const c = document.getElementById('tourney-groups-container');
+                if(!c) return;
+
+                c.innerHTML = DB.tournament.groups.map(g => {
+                    const st = tourneyLogic.getGroupStandings(g.id);
+                    
+                    const rows = st.map((s, idx) => `
+                        <tr class="border-b border-white/5 hover:bg-white/[0.02] ${idx < 2 ? 'bg-green-500/5' : ''}">
+                            <td class="px-4 py-3 flex justify-between items-center group">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] text-zinc-500 font-mono w-4">${idx+1}.</span>
+                                    <span class="text-[11px] font-black text-white uppercase">${s.team}</span>
+                                </div>
+                                <button onclick="tourneyLogic.removeTeamFromGroup('${g.id}', '${s.team}')" class="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Remove">✕</button>
+                            </td>
+                            <td class="px-2 py-3 text-center text-[10px] text-zinc-400 font-mono">${s.p}</td>
+                            <td class="px-2 py-3 text-center text-[10px] text-white font-mono">${s.w}</td>
+                            <td class="px-2 py-3 text-center text-[10px] text-zinc-400 font-mono">${s.d}</td>
+                            <td class="px-2 py-3 text-center text-[10px] text-zinc-400 font-mono">${s.l}</td>
+                            <td class="px-2 py-3 text-center text-[10px] text-zinc-400 font-mono">${s.gd > 0 ? '+'+s.gd : s.gd}</td>
+                            <td class="px-2 py-3 text-center text-[12px] text-gold font-black font-mono">${s.pts}</td>
+                        </tr>
+                    `).join('');
+
+                    return `
+                        <div class="glass-card flex flex-col h-full overflow-hidden">
+                            <div class="p-5 border-b border-white/5 flex justify-between items-center bg-black/20">
+                                <h3 class="text-lg font-black text-purple-400 uppercase tracking-widest">${g.name}</h3>
+                                <div class="flex gap-2">
+                                    <button onclick="tourneyLogic.generateGroupMatches('${g.id}')" class="bg-blue-500/10 hover:bg-blue-500/30 text-blue-400 px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-colors" title="Auto-Generate Round Robin">Matches</button>
+                                    <button onclick="tourneyUI.openAddTeamModal('${g.id}', '${g.name}')" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-colors">+ Squad</button>
+                                    <button onclick="tourneyLogic.deleteGroup('${g.id}')" class="bg-red-500/10 hover:bg-red-500/30 text-red-500 px-3 py-1 rounded-lg text-[9px] font-black uppercase transition-colors">Del</button>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto flex-1">
+                                <table class="w-full text-left min-w-[400px]">
+                                    <thead class="text-[8px] uppercase text-zinc-600 font-black border-b border-white/10 bg-black/40">
+                                        <tr>
+                                            <th class="px-4 py-3">Squad</th>
+                                            <th class="px-2 py-3 text-center">P</th>
+                                            <th class="px-2 py-3 text-center">W</th>
+                                            <th class="px-2 py-3 text-center">D</th>
+                                            <th class="px-2 py-3 text-center">L</th>
+                                            <th class="px-2 py-3 text-center">GD</th>
+                                            <th class="px-2 py-3 text-center text-gold">Pts</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-white/5">
+                                        ${rows || `<tr><td colspan="7" class="px-4 py-8 text-center text-[10px] text-zinc-600 font-bold uppercase">No squads assigned to this group yet.</td></tr>`}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                if(DB.tournament.groups.length === 0) {
+                    c.innerHTML = `<div class="col-span-full text-center py-20 text-zinc-600 font-black uppercase tracking-widest text-xs border-2 border-dashed border-zinc-800 rounded-3xl">No groups created yet. Click above to start.</div>`;
+                }
+            },
+            renderMatches: () => {
+                const c = document.getElementById('tourney-matches-container');
+                if(!c) return;
+
+                // Create Tabs Html
+                let filterHtml = `<div class="flex gap-2 overflow-x-auto pb-4 mb-4 border-b border-white/5" style="scrollbar-width: none;">`;
+                const filters = ['All'];
+                DB.tournament.groups.forEach(g => filters.push(g.name));
+                ['Quarter-Final', 'Semi-Final', '3rd Place', 'Final'].forEach(s => filters.push(s));
+                
+                filters.forEach(f => {
+                    const active = tourneyUI.currentMatchFilter === f ? 'bg-white/10 text-white' : 'text-zinc-500 hover:bg-white/5';
+                    filterHtml += `<button onclick="tourneyUI.setMatchFilter('${f}')" class="px-4 py-2 text-[10px] font-black uppercase rounded-lg ${active} whitespace-nowrap transition-colors border border-transparent focus:outline-none flex-shrink-0">${f}</button>`;
+                });
+                filterHtml += `</div>`;
+
+                // Group matches by stage
+                const stages = ['Final', '3rd Place', 'Semi-Final', 'Quarter-Final', 'Round of 16', 'Group Stage'];
+                let html = filterHtml;
+                let renderedCount = 0;
+
+                stages.forEach(stage => {
+                    let stageMatches = DB.tournament.matches.filter(m => m.stage === stage);
+                    
+                    // Apply the new filter
+                    if(tourneyUI.currentMatchFilter !== 'All') {
+                        if(['Quarter-Final', 'Semi-Final', '3rd Place', 'Final'].includes(tourneyUI.currentMatchFilter)) {
+                            stageMatches = stageMatches.filter(m => m.stage === tourneyUI.currentMatchFilter);
+                        } else {
+                            // Match by group name
+                            const g = DB.tournament.groups.find(x => x.name === tourneyUI.currentMatchFilter);
+                            if(g) {
+                                stageMatches = stageMatches.filter(m => m.groupId === g.id);
+                            } else {
+                                stageMatches = [];
+                            }
+                        }
+                    }
+
+                    if(stageMatches.length > 0) {
+                        renderedCount++;
+                        html += `
+                            <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mt-6 mb-4 border-b border-white/5 pb-2">${stage}</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        `;
+                        html += stageMatches.map(m => {
+                            const isComp = m.status === 'completed';
+                            let contextLabel = m.stage;
+                            if(m.stage === 'Group Stage') {
+                                const g = DB.tournament.groups.find(x => x.id === m.groupId);
+                                if(g) contextLabel = g.name;
+                            }
+
+                            return `
+                                <div class="glass-card p-5 group flex flex-col justify-between border ${isComp ? 'border-zinc-800' : 'border-gold/30 shadow-[0_0_15px_rgba(212,175,55,0.1)]'}">
+                                    <div class="flex justify-between items-start mb-4">
+                                        <button onclick="tourneyLogic.toggleMatchStatus('${m.id}')" class="px-3 py-1 rounded-md text-[8px] font-black uppercase transition-all ${isComp ? 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20' : 'bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white border border-green-500/40 shadow-[0_0_10px_rgba(34,197,94,0.2)]'}">
+                                            ${isComp ? 'Reopen Match' : 'End Match (Whistle)'}
+                                        </button>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">${contextLabel}</span>
+                                            <button onclick="tourneyLogic.deleteMatch('${m.id}')" class="text-zinc-700 hover:text-red-500 ml-2" title="Delete">✕</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between px-2 mb-6">
+                                        <div class="flex-1 text-right">
+                                            <p class="text-[11px] md:text-xs font-black text-white uppercase">${m.team1}</p>
+                                        </div>
+                                        <div class="px-4 text-center shrink-0">
+                                            <div class="bg-black border border-white/10 px-4 py-2 rounded-xl text-lg font-black font-mono tracking-widest ${isComp ? 'text-zinc-500' : 'text-gold shadow-inner'}">
+                                                ${m.score1} - ${m.score2}
+                                            </div>
+                                        </div>
+                                        <div class="flex-1 text-left">
+                                            <p class="text-[11px] md:text-xs font-black text-white uppercase">${m.team2}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    ${(isComp && m.mvp) ? `<div class="text-center mb-4"><span class="inline-flex items-center gap-1 bg-gold/10 border border-gold/20 text-gold px-3 py-1.5 rounded-lg text-[9px] font-black uppercase"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg> MVP: ${m.mvp.name}</span></div>` : ''}
+
+                                    <button onclick="tourneyUI.openMatchEditor('${m.id}')" class="w-full py-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-gold/30 transition-all text-[9px] font-black uppercase text-zinc-400 hover:text-gold flex items-center justify-center gap-2 mt-auto">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                        Edit Score & Goalscorers
+                                    </button>
+                                </div>
+                            `;
+                        }).join('');
+                        html += `</div>`;
+                    }
+                });
+
+                if(renderedCount === 0) {
+                    c.innerHTML = filterHtml + `<div class="text-center py-20 text-zinc-600 font-black uppercase tracking-widest text-xs border-2 border-dashed border-zinc-800 rounded-3xl">No matches found for this view.</div>`;
+                } else {
+                    c.innerHTML = html;
+                }
+            },
+            renderStats: () => {
+                const tbody = document.getElementById('tourney-stats-body');
+                if(!tbody) return;
+
+                // Aggregate goals
+                let players = {}; // uid -> { name, team, goals }
+                
+                DB.tournament.matches.forEach(m => {
+                    if(m.status === 'completed' && m.events) {
+                        m.events.forEach(ev => {
+                            if(ev.type === 'goal') {
+                                if(!players[ev.playerUid]) {
+                                    players[ev.playerUid] = { name: ev.playerName, team: ev.team, goals: 0 };
+                                }
+                                players[ev.playerUid].goals++;
+                            }
+                        });
+                    }
+                });
+
+                let sorted = Object.values(players).sort((a,b) => b.goals - a.goals);
+
+                if(sorted.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="px-8 py-10 text-center text-[10px] text-zinc-600 font-bold uppercase">No goals recorded in completed matches yet.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = sorted.map((p, idx) => `
+                    <tr class="hover:bg-white/[0.02] transition-colors border-b border-white/5">
+                        <td class="px-8 py-5">
+                            ${idx === 0 ? '<span class="text-xl">🏆</span>' : `<span class="text-[12px] font-mono text-zinc-500 font-black">${idx+1}</span>`}
+                        </td>
+                        <td class="px-8 py-5 text-[12px] font-black text-white uppercase">${p.name}</td>
+                        <td class="px-8 py-5">
+                            <span class="text-[9px] font-black text-purple-400 bg-purple-500/10 px-3 py-1 rounded-full uppercase border border-purple-500/20">${p.team}</span>
+                        </td>
+                        <td class="px-8 py-5 text-right text-lg font-black font-mono text-gold">${p.goals}</td>
+                    </tr>
+                `).join('');
+            },
+            
+            // MODALS
+            closeModals: () => {
+                document.getElementById('modal-create-group').style.display = 'none';
+                document.getElementById('modal-add-team').style.display = 'none';
+                document.getElementById('modal-create-match').style.display = 'none';
+                document.getElementById('modal-match-editor').style.display = 'none';
+            },
+            openCreateGroupModal: () => {
+                document.getElementById('tourney-group-name').value = '';
+                document.getElementById('modal-create-group').style.display = 'flex';
+            },
+            openAddTeamModal: (groupId, groupName) => {
+                document.getElementById('assign-group-id').value = groupId;
+                document.getElementById('assign-group-name').innerText = groupName;
+                
+                const select = document.getElementById('tourney-team-select');
+                // Filter out teams that are already in ANY group
+                const allAssignedTeams = DB.tournament.groups.flatMap(g => g.teams);
+                const availableTeams = DB.teams.filter(t => !allAssignedTeams.includes(t));
+
+                select.innerHTML = availableTeams.length > 0 
+                    ? availableTeams.map(t => `<option value="${t}">${t}</option>`).join('')
+                    : `<option value="">No unassigned squads left</option>`;
+                
+                document.getElementById('modal-add-team').style.display = 'flex';
+            },
+            openCreateMatchModal: () => {
+                tourneyUI.handleStageChange(); // resets view
+                document.getElementById('modal-create-match').style.display = 'flex';
+            },
+            handleStageChange: () => {
+                const stage = document.getElementById('match-stage').value;
+                const gContainer = document.getElementById('match-group-container');
+                const gSelect = document.getElementById('match-group');
+
+                if(stage === 'Group Stage') {
+                    gContainer.style.display = 'block';
+                    gSelect.innerHTML = DB.tournament.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+                    tourneyUI.populateMatchTeams(); // Populate based on selected group
+                } else {
+                    gContainer.style.display = 'none';
+                    // Populate with all teams for knockouts
+                    const options = DB.teams.map(t => `<option value="${t}">${t}</option>`).join('');
+                    document.getElementById('match-team1').innerHTML = options;
+                    document.getElementById('match-team2').innerHTML = options;
+                }
+            },
+            populateMatchTeams: () => {
+                const stage = document.getElementById('match-stage').value;
+                if(stage !== 'Group Stage') return;
+
+                const gId = document.getElementById('match-group').value;
+                const g = DB.tournament.groups.find(x => x.id === gId);
+                const options = g ? g.teams.map(t => `<option value="${t}">${t}</option>`).join('') : '';
+                
+                document.getElementById('match-team1').innerHTML = options;
+                document.getElementById('match-team2').innerHTML = options;
+            },
+            openMatchEditor: (matchId) => {
+                const match = DB.tournament.matches.find(m => m.id === matchId);
+                if(!match) return;
+
+                document.getElementById('editor-match-id').value = match.id;
+                
+                let stageTxt = match.stage;
+                if(match.stage === 'Group Stage') {
+                    const g = DB.tournament.groups.find(x => x.id === match.groupId);
+                    if(g) stageTxt += ` - ${g.name}`;
+                }
+                document.getElementById('editor-match-stage').innerText = stageTxt;
+
+                document.getElementById('editor-t1-name').innerText = match.team1;
+                document.getElementById('editor-t2-name').innerText = match.team2;
+                document.getElementById('editor-t1-score').value = match.score1;
+                document.getElementById('editor-t2-score').value = match.score2;
+
+                // Populate players dropdowns based on squad
+                const getOptions = (teamName) => {
+                    const players = DB.passes.filter(p => p.team === teamName && p.role === 'Player');
+                    return players.length > 0 
+                        ? players.map(p => `<option value="${p.uid}">${p.name}</option>`).join('')
+                        : `<option value="">No players found</option>`;
+                };
+
+                document.getElementById('editor-t1-player').innerHTML = getOptions(match.team1);
+                document.getElementById('editor-t2-player').innerHTML = getOptions(match.team2);
+
+                // Populate MVP Dropdown
+                const allMatchPlayers = DB.passes.filter(p => (p.team === match.team1 || p.team === match.team2) && p.role === 'Player');
+                let mvpOptions = `<option value="">-- Select Match MVP --</option>`;
+                allMatchPlayers.forEach(p => {
+                    mvpOptions += `<option value="${p.uid}">${p.name} (${p.team})</option>`;
+                });
+                const mvpSelect = document.getElementById('editor-match-mvp');
+                mvpSelect.innerHTML = mvpOptions;
+                if(match.mvp) mvpSelect.value = match.mvp.uid;
+
+                // Clone events to local logic
+                tourneyLogic.currentMatchEvents = [...(match.events || [])];
+                tourneyUI.renderMatchEvents();
+
+                document.getElementById('modal-match-editor').style.display = 'flex';
+            },
+            cancelMatchEditor: () => {
+                const mId = document.getElementById('editor-match-id').value;
+                const match = DB.tournament.matches.find(m => m.id === mId);
+                
+                const t1s = parseInt(document.getElementById('editor-t1-score').value) || 0;
+                const t2s = parseInt(document.getElementById('editor-t2-score').value) || 0;
+                const ev1 = tourneyLogic.currentMatchEvents.filter(e => e.team === match.team1).length;
+                const ev2 = tourneyLogic.currentMatchEvents.filter(e => e.team === match.team2).length;
+                
+                // Password Validation for Emergency Exit if unbalanced
+                if (t1s !== ev1 || t2s !== ev2) {
+                    const p = prompt("WARNING: Score does not match registered goalscorers!\n\nTo safely discard your changes and force close this window, enter your admin password:");
+                    if (p === null) return; // User clicked cancel on prompt
+                    
+                    const currUser = sessionStorage.getItem('dawra_current_user');
+                    if (p === authLogic.users[currUser]) {
+                        tourneyUI.closeModals();
+                    } else {
+                        ui.notify("Incorrect Password. Action Blocked.");
+                    }
+                } else {
+                    tourneyUI.closeModals();
+                }
+            },
+            renderMatchEvents: () => {
+                const mId = document.getElementById('editor-match-id').value;
+                const match = DB.tournament.matches.find(m => m.id === mId);
+                if (!match) return;
+
+                const e1 = document.getElementById('editor-t1-events');
+                const e2 = document.getElementById('editor-t2-events');
+
+                const renderEv = (events) => events.map(e => `
+                    <div class="flex justify-between items-center bg-black/40 border border-white/5 p-2 rounded-lg mb-2">
+                        <span class="text-[10px] text-white font-bold uppercase truncate pr-2 flex items-center gap-2"><svg class="w-3 h-3 text-gold shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>${e.playerName}</span>
+                        <button onclick="tourneyLogic.removeEvent('${e.id}')" class="text-red-500 hover:bg-red-500/20 rounded p-1 shrink-0" title="Remove">✕</button>
+                    </div>
+                `).join('');
+
+                e1.innerHTML = renderEv(tourneyLogic.currentMatchEvents.filter(e => e.team === match.team1));
+                e2.innerHTML = renderEv(tourneyLogic.currentMatchEvents.filter(e => e.team === match.team2));
+            }
+        };
+
+        // --- NEW QR SCANNER LOGIC ---
+        let html5QrcodeScanner = null;
+        const scannerLogic = {
+            isScanningPaused: false,
+            currentScannedItem: null,
+            start: () => {
+                if (!html5QrcodeScanner) {
+                    html5QrcodeScanner = new Html5QrcodeScanner(
+                        "reader", 
+                        { fps: 15 }, 
+                        /* verbose= */ false
+                    );
+                }
+                
+                document.getElementById('btn-start-scan').classList.add('hidden');
+                document.getElementById('btn-stop-scan').classList.remove('hidden');
+
+                html5QrcodeScanner.render(scannerLogic.onScanSuccess, (err) => {
+                    // Ignore background scan errors
+                });
+            },
+            stop: () => {
+                if (html5QrcodeScanner) {
+                    try { html5QrcodeScanner.clear(); } catch(e){}
+                }
+                document.getElementById('btn-start-scan').classList.remove('hidden');
+                document.getElementById('btn-stop-scan').classList.add('hidden');
+            },
+            resume: () => {
+                document.getElementById('scan-modal').classList.add('hidden');
+                document.getElementById('scan-modal').classList.remove('flex');
+                
+                if (html5QrcodeScanner) {
+                    try { html5QrcodeScanner.resume(); } catch(e){}
+                }
+                setTimeout(() => {
+                    scannerLogic.isScanningPaused = false;
+                }, 500); 
+            },
+            toggleScannerPayment: (uid) => {
+                let p = DB.passes.find(x => x.uid === uid);
+                if(p && p.paymentStatus !== 'Free' && p.paymentStatus !== 'N/A') {
+                    p.paymentStatus = p.paymentStatus === 'Paid' ? 'Unpaid' : 'Paid';
+                    system.save(); // Save to cloud
+                    ui.notify(`${p.name} is now ${p.paymentStatus}`);
+                    scannerLogic.updatePaymentBadge(p.paymentStatus); 
+                }
+            },
+            updatePaymentBadge: (pStatus) => {
+                const paymentDiv = document.getElementById('scan-payment');
+                if (pStatus === 'Paid') {
+                    paymentDiv.className = "text-[10px] font-black uppercase px-3 py-1 rounded-full bg-green-500/20 text-green-500 border border-green-500/30";
+                    paymentDiv.innerText = "✓ PAID";
+                } else if (pStatus === 'Unpaid') {
+                    paymentDiv.className = "text-[10px] font-black uppercase px-3 py-1 rounded-full bg-red-500/20 text-red-500 border border-red-500/30 animate-pulse";
+                    paymentDiv.innerText = "⚠ UNPAID - COLLECT FEE";
+                } else {
+                    paymentDiv.className = "text-[10px] font-black uppercase px-3 py-1 rounded-full bg-zinc-900 text-zinc-500 border border-white/5";
+                    paymentDiv.innerText = "✓ FREE / PARTICIPANT";
+                }
+            },
+            onScanSuccess: (decodedText, decodedResult) => {
+                if(scannerLogic.isScanningPaused) return;
+                scannerLogic.isScanningPaused = true;
+                
+                // Show modal securely and pause camera feed
+                const modal = document.getElementById('scan-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex'); 
+                
+                if (html5QrcodeScanner) {
+                    try { html5QrcodeScanner.pause(true); } catch(e){}
+                }
+                
+                // Audio feedback (beep)
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    osc.connect(ctx.destination);
+                    osc.frequency.value = 800;
+                    osc.start();
+                    setTimeout(() => { osc.stop(); }, 100);
+                } catch(e) {}
+
+                let uid = decodedText;
+                const lines = decodedText.split('\n');
+                const idLine = lines.find(l => l.startsWith('ID:'));
+                if(idLine) {
+                    uid = idLine.replace('ID:', '').trim();
+                } else {
+                    uid = decodedText.trim();
+                }
+
+                let foundPass = DB.passes.find(p => p.uid === uid);
+                let isGuest = false;
+                let hostPass = null;
+
+                if(!foundPass) {
+                    for(let p of DB.passes) {
+                        if(p.guests) {
+                            let g = p.guests.find(xg => xg.uid === uid);
+                            if(g) {
+                                foundPass = g;
+                                isGuest = true;
+                                hostPass = p;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if(foundPass) {
+                    scannerLogic.currentScannedItem = { pass: foundPass, isGuest: isGuest, hostPass: hostPass };
+
+                    if (foundPass.checkInStatus === 'Entered' || foundPass.checkInStatus === 'Quit') {
+                        scannerLogic.showWarning(foundPass, isGuest, hostPass);
+                    } else {
+                        foundPass.checkInStatus = 'Entered';
+                        system.save(); 
+                        document.getElementById('scan-action-text').innerText = "Marked as Entered";
+                        scannerLogic.showResult(true, foundPass, isGuest, hostPass);
+                    }
+                } else {
+                    scannerLogic.showResult(false);
+                }
+            },
+            forceStatus: (status) => {
+                const item = scannerLogic.currentScannedItem;
+                if(!item || !item.pass) return;
+                item.pass.checkInStatus = status;
+                system.save();
+                ui.notify(`Status updated to ${status}`);
+                document.getElementById('scan-action-text').innerText = `Force Marked as ${status}`;
+                scannerLogic.showResult(true, item.pass, item.isGuest, item.hostPass);
+            },
+            showWarning: (data, isGuest, host) => {
+                const successDiv = document.getElementById('scan-success');
+                const errorDiv = document.getElementById('scan-error');
+                const warnDiv = document.getElementById('scan-action-required');
+
+                successDiv.classList.add('hidden'); successDiv.classList.remove('flex');
+                errorDiv.classList.add('hidden'); errorDiv.classList.remove('flex');
+                warnDiv.classList.remove('hidden'); warnDiv.classList.add('flex');
+
+                document.getElementById('scan-warn-status').innerText = data.checkInStatus;
+                document.getElementById('scan-warn-name').innerText = data.name || (isGuest ? `Guest of ${host.name}` : 'Unknown Participant');
+            },
+            showResult: (isValid, data = null, isGuest = false, host = null) => {
+                const successDiv = document.getElementById('scan-success');
+                const errorDiv = document.getElementById('scan-error');
+                const warnDiv = document.getElementById('scan-action-required');
+                
+                if (warnDiv) { warnDiv.classList.add('hidden'); warnDiv.classList.remove('flex'); }
+
+                if (isValid) {
+                    errorDiv.classList.add('hidden');
+                    errorDiv.classList.remove('flex');
+                    successDiv.classList.remove('hidden');
+                    successDiv.classList.add('flex');
+                    
+                    document.getElementById('scan-name').innerText = data.name || 'Unnamed Guest';
+                    document.getElementById('scan-details').innerText = isGuest ? `GUEST OF ${host.name} • ${data.team}` : `${data.role} • ${data.team}`;
+                    
+                    document.getElementById('scan-uid').innerText = data.uid || 'N/A';
+                    document.getElementById('scan-nid').innerText = isGuest ? `N/A (Guest)` : (data.nid || 'N/A');
+                    document.getElementById('scan-phone').innerText = isGuest ? (host.phone || 'N/A') : (data.phone || 'N/A');
+                    document.getElementById('scan-validity').innerText = isGuest ? (host.validity || 'N/A') : (data.validity || 'N/A');
+                    document.getElementById('scan-issued').innerText = isGuest ? (host.issuedAt || 'N/A') : (data.issuedAt || 'N/A');
+
+                    let pStatus = isGuest ? 'Free' : (data.paymentStatus || 'N/A');
+                    if (data.role !== 'Spectator' && !isGuest) pStatus = 'Participant';
+
+                    scannerLogic.updatePaymentBadge(pStatus);
+
+                    const toggleBtn = document.getElementById('scan-toggle-payment-btn');
+                    if (!isGuest && data.role === 'Spectator' && pStatus !== 'Free' && pStatus !== 'N/A') {
+                        toggleBtn.classList.remove('hidden');
+                        toggleBtn.onclick = () => scannerLogic.toggleScannerPayment(data.uid);
+                    } else {
+                        toggleBtn.classList.add('hidden');
+                    }
+
+                } else {
+                    successDiv.classList.add('hidden');
+                    successDiv.classList.remove('flex');
+                    errorDiv.classList.remove('hidden');
+                    errorDiv.classList.add('flex');
+                }
+            }
+        };
+
+        const system = {
+            init: async () => {
+                // 1. Initialize local data first to prevent data loss on refresh
+                const saved = localStorage.getItem('ramadan_dawra_db');
+                if(saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        if(parsed.passes) {
+                            DB = parsed;
+                            // Ensure tournament object exists from old backups
+                            if(!DB.tournament) DB.tournament = { groups: [], matches: [] };
+                        }
+                    } catch(e){}
+                }
+                ui.refresh();
+                ui.renderSponsors();
+                tourneyUI.refresh();
+
+                // 2. Initialize Authentication
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch(e) {
+                    console.error("Auth Error:", e);
+                    document.querySelectorAll('.cloud-status-dot').forEach(dot => {
+                        dot.className = "cloud-status-dot w-2 h-2 rounded-full bg-red-500";
+                        dot.title = "Setup Error: Please enable 'Anonymous' sign-in in Firebase Auth";
+                    });
+                    return; // Stop execution if auth fails
+                }
+
+                // 3. Attach Real-time Cloud Listener
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dawra_db', 'main');
+                        onSnapshot(docRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                const cloudData = docSnap.data();
+                                // Guard against overwriting local data with an empty cloud db
+                                if (cloudData.passes && cloudData.passes.length === 0 && DB.passes.length > 0) {
+                                    system.save();
+                                } else {
+                                    DB = cloudData;
+                                    if(!DB.tournament) DB.tournament = { groups: [], matches: [] };
+                                    localStorage.setItem('ramadan_dawra_db', JSON.stringify(DB));
+                                }
+                                system.onDataSynced();
+                            } else {
+                                // Initialize empty DB to cloud
+                                system.save();
+                                system.onDataSynced();
+                            }
+                        }, (error) => {
+                            console.error("Cloud Sync Error", error);
+                            document.querySelectorAll('.cloud-status-dot').forEach(dot => {
+                                dot.className = "cloud-status-dot w-2 h-2 rounded-full bg-red-500";
+                                dot.title = "Database Error: Rules must be set to allow read/write";
+                            });
+                        });
+                    }
+                });
+
+                setInterval(() => {
+                    const now = new Date();
+                    const clock = document.getElementById('live-clock');
+                    if (clock) clock.innerText = now.toLocaleTimeString('en-US', { 
+                        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
+                    });
+                }, 1000);
+            },
+            
+            onDataSynced: () => {
+                // Formatting updates after pulling from cloud
+                if(!DB.sponsors) DB.sponsors = [];
+                if(!DB.tournament) DB.tournament = { groups: [], matches: [] };
+                
+                if (DB.sponsors && DB.sponsors.length > 0) {
+                    DB.sponsors = DB.sponsors.map(s => {
+                        if (typeof s === 'string') return { image: s, size: DB.config.sponsorSize || 12 };
+                        return s;
+                    });
+                }
+                if (DB.passes) {
+                    DB.passes.forEach(p => {
+                        if (!p.checkInStatus) p.checkInStatus = 'Pending';
+                        if (!p.paymentStatus) {
+                            if (p.role !== 'Spectator') p.paymentStatus = 'N/A';
+                            else p.paymentStatus = p.price > 0 ? 'Paid' : 'Free';
+                        }
+                        // Ensure all guests also have a check-in status
+                        if (p.guests) {
+                            p.guests.forEach(g => {
+                                if (!g.checkInStatus) g.checkInStatus = 'Pending';
+                            });
+                        }
+                    });
+                }
+                
+                const logoEl = document.getElementById('header-logo');
+                if (DB.config.logo) {
+                    logoEl.src = DB.config.logo;
+                    logoEl.style.display = 'block';
+                    document.getElementById('logo-alt').style.display = 'none';
+                } else {
+                    logoEl.style.display = 'none';
+                    document.getElementById('logo-alt').style.display = 'block';
+                }
+
+                document.getElementById('set-price-spectator').value = DB.config.spectatorPrice || 500;
+                
+                // Update Cloud Status Indicator safely
+                document.querySelectorAll('.cloud-status-dot').forEach(dot => {
+                    if(!dot.className.includes('bg-red-500')) {
+                        dot.className = "cloud-status-dot w-2 h-2 rounded-full bg-green-500";
+                        dot.title = "Cloud Synced ✓";
+                    }
+                });
+
+                passes.updateUIVisibility();
+                ui.refresh();
+                ui.renderSponsors();
+                tourneyUI.refresh();
+            },
+
+            save: async () => {
+                // ALWAYS save locally first to guarantee no data loss!
+                localStorage.setItem('ramadan_dawra_db', JSON.stringify(DB));
+                ui.refresh(); // Visually update immediately
+                tourneyUI.refresh();
+                
+                if (auth.currentUser) {
+                    document.querySelectorAll('.cloud-status-dot').forEach(dot => {
+                        dot.className = "cloud-status-dot w-2 h-2 rounded-full bg-yellow-500 animate-pulse";
+                        dot.title = "Syncing...";
+                    });
+                    
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dawra_db', 'main');
+                    try {
+                        await setDoc(docRef, DB);
+                        document.querySelectorAll('.cloud-status-dot').forEach(dot => {
+                            dot.className = "cloud-status-dot w-2 h-2 rounded-full bg-green-500";
+                            dot.title = "Cloud Synced ✓";
+                        });
+                    } catch(err) {
+                        console.error("Cloud Write Error", err);
+                        document.querySelectorAll('.cloud-status-dot').forEach(dot => {
+                            dot.className = "cloud-status-dot w-2 h-2 rounded-full bg-red-500";
+                            dot.title = "Sync Failed: Database rules blocking write.";
+                        });
+                    }
+                }
+            },
+
+            exportBackup: () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", `dawra_backup_${Date.now()}.json`);
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            },
+            importBackup: (input) => {
+                const file = input.files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        try {
+                            const parsed = JSON.parse(e.target.result);
+                            if(parsed.passes) {
+                                DB = parsed;
+                                if(!DB.tournament) DB.tournament = { groups: [], matches: [] };
+                                await system.save();
+                                ui.notify("Database Restored to Cloud");
+                            }
+                        } catch(err) { ui.notify("Invalid JSON File"); }
+                    };
+                    reader.readAsText(file);
+                }
+            },
+            uploadLogo: (input) => {
+                const file = input.files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const compressed = await compressImage(e.target.result, 300);
+                        DB.config.logo = compressed;
+                        system.save();
+                        ui.notify("Brand Identity Updated");
+                    };
+                    reader.readAsDataURL(file);
+                }
+            },
+            removeLogo: () => {
+                DB.config.logo = null;
+                system.save();
+                ui.notify("Logo Removed");
+            },
+            uploadSponsors: (input) => {
+                const files = Array.from(input.files);
+                let loaded = 0;
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const compressed = await compressImage(e.target.result, 250);
+                        DB.sponsors.push({ image: compressed, size: 12 });
+                        loaded++;
+                        if(loaded === files.length) {
+                            system.save();
+                            ui.renderSponsors();
+                            ui.notify(`Added ${loaded} Sponsors via Cloud`);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+            },
+            removeSponsor: (index) => {
+                DB.sponsors.splice(index, 1);
+                system.save();
+                ui.renderSponsors();
+            },
+            updateSponsorSize: (index, val) => {
+                DB.sponsors[index].size = parseInt(val);
+                system.save();
+            },
+            updateConfig: () => {
+                DB.config.spectatorPrice = parseFloat(document.getElementById('set-price-spectator').value) || 0;
+                system.save();
+                ui.notify("Settings Updated");
+            },
+            generateUID: (prefix = 'DR') => `${prefix}-${Math.floor(1000 + Math.random() * 8999)}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
+            reset: () => { if(confirm("Erase all data from CLOUD?")) { DB.passes = []; DB.teams = []; DB.tournament = { groups: [], matches: [] }; system.save(); } }
+        };
+
+        const passes = {
+            updateUIVisibility: () => {
+                const role = document.getElementById('reg-role').value;
+                const paymentDropdown = document.getElementById('reg-payment');
+                const currentPayment = paymentDropdown.value;
+                
+                if (role === 'Spectator') {
+                    document.getElementById('price-hint').innerText = `Fee: ${DB.config.spectatorPrice} EGP`;
+                    paymentDropdown.innerHTML = `
+                        <option value="Paid">Paid (Money Collected)</option>
+                        <option value="Unpaid">Unpaid (Collect at Door)</option>
+                        <option value="Free">Free Ticket</option>
+                    `;
+                    // Retain selection if applicable
+                    if (["Paid", "Unpaid", "Free"].includes(currentPayment)) {
+                        paymentDropdown.value = currentPayment;
+                    }
+                } else {
+                    document.getElementById('price-hint').innerText = `No Charge`;
+                    paymentDropdown.innerHTML = `<option value="N/A">Not Applicable (Participant)</option>`;
+                }
+            },
+            handleRegister: (e) => {
+                e.preventDefault();
+                const editUid = document.getElementById('edit-uid').value;
+                const role = document.getElementById('reg-role').value;
+                const paymentStatus = document.getElementById('reg-payment').value;
+                
+                let actualPrice = 0;
+                if (role === 'Spectator' && paymentStatus !== 'Free') {
+                    actualPrice = DB.config.spectatorPrice;
+                }
+
+                const data = {
+                    name: document.getElementById('reg-name').value.trim(),
+                    phone: document.getElementById('reg-phone').value.trim(),
+                    role: role,
+                    validity: document.getElementById('reg-validity').value,
+                    nid: document.getElementById('reg-nid').value.trim(),
+                    team: document.getElementById('reg-team').value || 'Individual',
+                    price: actualPrice,
+                    paymentStatus: paymentStatus,
+                    checkInStatus: 'Pending',
+                    issuedAt: new Date().toLocaleString()
+                };
+                if(editUid) {
+                    const idx = DB.passes.findIndex(p => p.uid === editUid);
+                    data.checkInStatus = DB.passes[idx].checkInStatus || 'Pending';
+                    DB.passes[idx] = { ...DB.passes[idx], ...data };
+                    ui.cancelEdit();
+                } else {
+                    data.uid = system.generateUID();
+                    data.guests = role === 'Player' ? [
+                        { name: null, uid: system.generateUID('G') },
+                        { name: null, uid: system.generateUID('G') }
+                    ] : [];
+                    DB.passes.unshift(data);
+                }
+                system.save(); e.target.reset(); ui.notify("Member Synced to Cloud");
+            },
+            handleBulk: () => {
+                const text = document.getElementById('bulk-input').value.trim();
+                const lines = text.split('\n');
+                let count = 0;
+                
+                lines.forEach(line => {
+                    let parts = [];
+                    if (line.includes('\t')) {
+                        parts = line.split('\t');
+                    } else if (line.includes(',')) {
+                        parts = line.split(',');
+                    } else {
+                        const roleMatch = line.match(/(Organizer|Player|Spectator)/i);
+                        if (roleMatch) {
+                            const role = roleMatch[0];
+                            const roleIdx = line.indexOf(role);
+                            const nameAndPhone = line.substring(0, roleIdx);
+                            const phoneMatch = nameAndPhone.match(/01[0125]\d{8}/);
+                            const name = phoneMatch ? nameAndPhone.substring(0, phoneMatch.index).trim() : nameAndPhone.trim();
+                            const phone = phoneMatch ? phoneMatch[0] : '';
+                            const rest = line.substring(roleIdx + role.length).trim();
+                            const validityMatch = rest.match(/(Full|Day 1|Day 2)/i);
+                            const validity = validityMatch ? validityMatch[0] : 'Full Tournament';
+                            let nid = '', team = '';
+                            if (validityMatch) {
+                                const afterVal = rest.substring(validityMatch.index + validityMatch[0].length).trim();
+                                const nidMatch = afterVal.match(/\d{14}/);
+                                if (nidMatch) {
+                                    nid = nidMatch[0];
+                                    team = afterVal.substring(nidMatch.index + 14).trim();
+                                } else {
+                                    team = afterVal;
+                                }
+                            }
+                            parts = [name, phone, role, validity, nid, team];
+                        }
+                    }
+
+                    let [rawName, rawPhone, rawRole, rawValidity, rawNid, rawTeam] = parts.map(s => s?.trim());
+                    if(rawName && (rawPhone || rawRole)) {
+                        let finalRole = 'Player';
+                        const lowRole = rawRole?.toLowerCase() || '';
+                        if(lowRole.includes('organizer')) finalRole = 'Organizer';
+                        else if(lowRole.includes('spectator')) finalRole = 'Spectator';
+
+                        const team = rawTeam || 'Individual';
+                        if(team !== 'Individual' && !DB.teams.includes(team)) {
+                            DB.teams.push(team);
+                        }
+                        
+                        const isSpectator = finalRole === 'Spectator';
+
+                        DB.passes.unshift({
+                            uid: system.generateUID(),
+                            name: rawName, 
+                            phone: rawPhone || 'N/A', 
+                            role: finalRole, 
+                            validity: rawValidity || 'Full Tournament', 
+                            nid: rawNid || 'N/A', 
+                            team: team,
+                            price: isSpectator ? DB.config.spectatorPrice : 0,
+                            paymentStatus: isSpectator ? 'Unpaid' : 'N/A',
+                            checkInStatus: 'Pending',
+                            guests: finalRole === 'Player' ? [
+                                { name: null, uid: system.generateUID('G') },
+                                { name: null, uid: system.generateUID('G') }
+                            ] : [],
+                            issuedAt: new Date().toLocaleString()
+                        });
+                        count++;
+                    }
+                });
+
+                if(count > 0) {
+                    system.save();
+                    ui.toggleBulk();
+                    document.getElementById('bulk-input').value = '';
+                    ui.notify(`Synced ${count} Members to Cloud`);
+                } else {
+                    ui.notify("No valid data found. Check format.");
+                }
+            },
+            delete: (uid) => { if(confirm("Revoke Access globally?")) { DB.passes = DB.passes.filter(p => p.uid !== uid); system.save(); } },
+            deleteGuest: (hostUid, guestUid) => {
+                if(confirm("Revoke this Guest pass permanently?")) {
+                    const host = DB.passes.find(x => x.uid === hostUid);
+                    if(host && host.guests) {
+                        const g = host.guests.find(x => x.uid === guestUid);
+                        if(g) {
+                            g.name = null; // Clears the guest
+                            g.checkInStatus = 'Pending';
+                            system.save();
+                            ui.notify("Guest Revoked");
+                        }
+                    }
+                }
+            },
+            edit: (uid) => {
+                const p = DB.passes.find(x => x.uid === uid);
+                document.getElementById('edit-uid').value = p.uid;
+                document.getElementById('reg-name').value = p.name;
+                document.getElementById('reg-phone').value = p.phone;
+                document.getElementById('reg-role').value = p.role;
+                document.getElementById('reg-validity').value = p.validity;
+                document.getElementById('reg-nid').value = p.nid;
+                document.getElementById('reg-team').value = p.team;
+                
+                passes.updateUIVisibility(); // Force refresh dropdown options
+                
+                const pStatus = p.paymentStatus || (p.price > 0 ? 'Paid' : 'Free');
+                if (p.role !== 'Spectator') {
+                    document.getElementById('reg-payment').value = 'N/A';
+                } else {
+                    document.getElementById('reg-payment').value = pStatus;
+                }
+
+                document.getElementById('form-title').innerText = "Modify Registration";
+                document.getElementById('submit-btn').innerText = "Update Member";
+                document.getElementById('cancel-edit-btn').classList.remove('hidden');
+                
+                // Route to Passes App if editing from another app
+                appNav.showApp('passes');
+                showTab('passes', 'passes');
+            },
+            search: () => {
+                const q = document.getElementById('global-search').value.toLowerCase();
+                const rows = document.querySelectorAll('#pass-table-body tr');
+                let visibleCount = 0;
+                rows.forEach(row => {
+                    if (row.innerText.toLowerCase().includes(q)) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                
+                const listCountEl = document.getElementById('list-count');
+                if (listCountEl) listCountEl.innerText = `${visibleCount} TOTAL`;
+            }
+        };
+
+        const eventDay = {
+            currentFilter: 'All',
+            setFilter: (f) => {
+                eventDay.currentFilter = f;
+                document.querySelectorAll('.event-filter-btn').forEach(btn => {
+                    if(btn.dataset.filter === f) {
+                        btn.classList.add('bg-white/10', 'text-white');
+                        btn.classList.remove('text-zinc-500');
+                    } else {
+                        btn.classList.remove('bg-white/10', 'text-white');
+                        btn.classList.add('text-zinc-500');
+                    }
+                });
+                eventDay.render();
+            },
+            render: () => {
+                const tbody = document.getElementById('event-table-body');
+                if(!tbody) return;
+                
+                // 1. Compile all attendees into a flattened array (Primary Passes + Named Guests)
+                let allAttendees = [];
+                DB.passes.forEach(p => {
+                    allAttendees.push({
+                        isGuest: false,
+                        uid: p.uid,
+                        name: p.name,
+                        phone: p.phone,
+                        role: p.role,
+                        team: p.team,
+                        paymentStatus: p.paymentStatus,
+                        checkInStatus: p.checkInStatus
+                    });
+                    
+                    // Add guests if they have been assigned a name
+                    if (p.guests && p.guests.length > 0) {
+                        p.guests.forEach(g => {
+                            if (g.name && g.name.trim() !== '') {
+                                allAttendees.push({
+                                    isGuest: true,
+                                    uid: g.uid,
+                                    name: g.name,
+                                    phone: `Host: ${p.phone}`,
+                                    role: `Guest (${p.name})`,
+                                    team: p.team,
+                                    paymentStatus: 'Free', // Guests are intrinsically free tickets
+                                    checkInStatus: g.checkInStatus || 'Pending'
+                                });
+                            }
+                        });
+                    }
+                });
+                
+                // 2. Filter the combined array based on tabs
+                let filtered = allAttendees;
+                const f = eventDay.currentFilter;
+                
+                if (f === 'Pending') filtered = allAttendees.filter(p => p.checkInStatus === 'Pending');
+                if (f === 'Entered') filtered = allAttendees.filter(p => p.checkInStatus === 'Entered');
+                if (f === 'Quit') filtered = allAttendees.filter(p => p.checkInStatus === 'Quit');
+                if (f === 'Paid') filtered = allAttendees.filter(p => p.paymentStatus === 'Paid');
+                if (f === 'Unpaid') filtered = allAttendees.filter(p => p.paymentStatus === 'Unpaid');
+
+                tbody.innerHTML = filtered.map(p => {
+                    const isEntered = p.checkInStatus === 'Entered';
+                    const isQuit = p.checkInStatus === 'Quit';
+                    const isPaid = p.paymentStatus === 'Paid';
+                    const isFree = p.paymentStatus === 'Free';
+                    const isNA = (!p.isGuest && p.role !== 'Spectator') || p.paymentStatus === 'N/A';
+                    
+                    return `
+                        <tr class="group border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                            <td class="px-6 md:px-8 py-4 md:py-5">
+                                <div class="flex flex-col">
+                                    <span class="text-white font-black text-[11px] md:text-[12px] uppercase">${p.name}</span>
+                                    <span class="text-[8px] md:text-[9px] text-zinc-500 font-mono mt-1">${p.phone} • UID: ${p.uid}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 md:px-8 py-4 md:py-5">
+                                <span class="badge ${p.isGuest ? 'badge-spectator' : `badge-${p.role.toLowerCase()}`}">${p.role}</span>
+                                <p class="text-[8px] text-zinc-500 font-bold uppercase mt-2">${p.team}</p>
+                            </td>
+                            <td class="px-6 md:px-8 py-4 md:py-5">
+                                ${isNA 
+                                    ? `<span class="text-[8px] md:text-[9px] font-black text-zinc-500 uppercase bg-zinc-900 px-3 py-1.5 rounded-full border border-white/5 cursor-not-allowed">PARTICIPANT</span>` 
+                                    : isFree 
+                                        ? `<span class="text-[8px] md:text-[9px] font-black text-zinc-500 uppercase bg-zinc-900 px-3 py-1.5 rounded-full border border-white/5 cursor-not-allowed">FREE TICKET</span>` 
+                                        : `<button onclick="eventDay.togglePayment('${p.uid}')" class="text-[8px] md:text-[9px] font-black uppercase px-4 py-1.5 rounded-full transition-all ${isPaid ? 'bg-green-500/20 text-green-500 border border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.2)]' : 'bg-red-500/20 text-red-500 border border-red-500/30'}">${isPaid ? '✓ PAID' : '⚠ UNPAID'}</button>`
+                                }
+                            </td>
+                            <td class="px-6 md:px-8 py-4 md:py-5">
+                                <div class="flex flex-wrap gap-2">
+                                    <button onclick="eventDay.setStatus('${p.uid}', 'Entered')" class="px-3 md:px-4 py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase transition-all ${isEntered ? 'bg-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white border border-green-500/30'}">Entered</button>
+                                    <button onclick="eventDay.setStatus('${p.uid}', 'Quit')" class="px-3 md:px-4 py-2 rounded-lg md:rounded-xl text-[9px] md:text-[10px] font-black uppercase transition-all ${isQuit ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'bg-red-500/10 text-red-500 hover:bg-red-600 hover:text-white border border-red-500/30'}">Quit</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            },
+            setStatus: (uid, status) => {
+                // Check if it's a primary pass
+                let p = DB.passes.find(x => x.uid === uid);
+                if(p) {
+                    const newStatus = p.checkInStatus === status ? 'Pending' : status;
+                    p.checkInStatus = newStatus;
+                    system.save();
+                    ui.notify(`${p.name} status: ${newStatus}`);
+                    return;
+                }
+                
+                // If not found, check if it's a guest pass
+                for (let pass of DB.passes) {
+                    if (pass.guests) {
+                        let guest = pass.guests.find(x => x.uid === uid);
+                        if (guest) {
+                            const newStatus = guest.checkInStatus === status ? 'Pending' : status;
+                            guest.checkInStatus = newStatus;
+                            system.save();
+                            ui.notify(`${guest.name} status: ${newStatus}`);
+                            return;
+                        }
+                    }
+                }
+            },
+            togglePayment: (uid) => {
+                const p = DB.passes.find(x => x.uid === uid);
+                if(p && p.paymentStatus !== 'Free' && p.paymentStatus !== 'N/A') {
+                    p.paymentStatus = p.paymentStatus === 'Paid' ? 'Unpaid' : 'Paid';
+                    system.save();
+                    ui.notify(`${p.name} is now ${p.paymentStatus}`);
+                }
+            },
+            search: () => {
+                const q = document.getElementById('event-search').value.toLowerCase();
+                const rows = document.querySelectorAll('#event-table-body tr');
+                rows.forEach(row => row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none');
+            }
+        };
+
+        const teams = {
+            add: () => {
+                const name = document.getElementById('team-name-input').value.trim();
+                if(name && !DB.teams.includes(name)) { DB.teams.push(name); document.getElementById('team-name-input').value = ''; system.save(); ui.notify("Squad Created"); }
+            },
+            delete: (name) => { if(confirm(`Dissolve ${name}?`)) { DB.teams = DB.teams.filter(t => t !== name); DB.passes.forEach(p => { if(p.team === name) p.team = 'Individual'; }); system.save(); } }
+        };
+
+        const pdf = {
+            _getImageDimensions: (dataUrl) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve({ w: img.width, h: img.height, ratio: img.width / img.height });
+                    img.src = dataUrl;
+                });
+            },
+
+            _renderTextToImage: (text, width, fontSize, color = 'white', align = 'center') => {
+                const canvas = document.createElement('canvas');
+                const scale = 4;
+                const canvasWidth = width * 4; 
+                const canvasHeight = fontSize * 10;
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+                const ctx = canvas.getContext('2d');
+                
+                ctx.font = `bold ${fontSize * scale}px 'Segoe UI', 'Tahoma', 'Arial', sans-serif`;
+                ctx.fillStyle = color;
+                ctx.textAlign = align;
+                ctx.textBaseline = 'middle';
+                
+                const x = align === 'center' ? canvasWidth / 2 : 10;
+                ctx.fillText(text, x, canvasHeight / 2);
+                return canvas.toDataURL('image/png');
+            },
+
+            _generateDoc: async (uid, isGuest = false, guestIdx = 0, hostUid = null) => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ unit: 'mm', format: [80, 130] });
+                let pName, pRole, pTeam, pPhone, pNid, pValidity, finalUid;
+
+                if(isGuest) {
+                    const host = DB.passes.find(x => x.uid === hostUid);
+                    const guest = host.guests[guestIdx];
+                    pName = guest.name || "VALUED GUEST";
+                    pRole = "Guest Pass";
+                    pTeam = `Invited by: ${host.name}`;
+                    pPhone = host.phone;
+                    pNid = `HOST ID: ${host.uid}`;
+                    pValidity = host.validity;
+                    finalUid = guest.uid;
+                } else {
+                    const pData = DB.passes.find(x => x.uid === uid);
+                    pName = pData.name;
+                    pRole = pData.role;
+                    pTeam = pData.team;
+                    pPhone = pData.phone;
+                    pNid = pData.nid;
+                    pValidity = pData.validity;
+                    finalUid = pData.uid;
+                }
+
+                const qrText = `ID: ${finalUid}\nNAME: ${pName}\nROLE: ${pRole}\nSQUAD: ${pTeam}\nVALIDITY: ${pValidity}\nPHONE: ${pPhone}`;
+                
+                doc.setFillColor(10, 10, 10);
+                doc.rect(0, 0, 80, 130, 'F');
+                doc.setDrawColor(212, 175, 55);
+                doc.setLineWidth(0.5);
+                doc.rect(3, 3, 74, 124);
+
+                if(DB.config.logo) {
+                    const dims = await pdf._getImageDimensions(DB.config.logo);
+                    const maxW = 30;
+                    const maxH = 20;
+                    let drawW = maxW;
+                    let drawH = drawW / dims.ratio;
+                    if(drawH > maxH) { drawH = maxH; drawW = drawH * dims.ratio; }
+                    doc.addImage(DB.config.logo, 'PNG', 40 - (drawW / 2), 8, drawW, drawH);
+                } else {
+                    doc.setTextColor(212, 175, 55); doc.setFontSize(10); doc.text("DAWRA RAMADANEYA 26'", 40, 15, {align:'center'}); 
+                }
+
+                doc.setTextColor(212, 175, 55); doc.setFontSize(6); doc.text(isGuest ? "GUEST ACCESS" : "OFFICIAL MEMBER", 40, 32, {align: 'center'});
+                
+                const nameImg = pdf._renderTextToImage(pName.toUpperCase(), 200, 14);
+                doc.addImage(nameImg, 'PNG', 10, 35, 60, 12); 
+
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(8);
+                doc.text(`ID: ${finalUid}`, 40, 48, {align: 'center'});
+
+                const label = (txt, val, y) => {
+                    doc.setTextColor(100, 100, 100); doc.setFontSize(5); doc.text(txt, 10, y);
+                    const hasArabic = /[\u0600-\u06FF]/.test(val);
+                    if(hasArabic) {
+                         const valImg = pdf._renderTextToImage(val.toUpperCase(), 150, 10, 'white', 'left');
+                         doc.addImage(valImg, 'PNG', 10, y + 1, 45, 6);
+                    } else {
+                        doc.setTextColor(255, 255, 255); doc.setFontSize(8); doc.text(String(val).toUpperCase(), 10, y + 4);
+                    }
+                };
+
+                label("CATEGORY", pRole, 55);
+                label("SQUAD", pTeam, 68);
+                label("PHONE", pPhone, 81);
+                label("IDENTIFICATION", pNid, 94);
+
+                const qr = qrcode(0, 'L');
+                qr.addData(qrText);
+                qr.make();
+                doc.setFillColor(255, 255, 255);
+                doc.rect(53, 85, 20, 20, 'F');
+                doc.addImage(qr.createDataURL(), 'PNG', 54, 86, 18, 18);
+
+                if(DB.sponsors && DB.sponsors.length > 0) {
+                    doc.setDrawColor(255, 255, 255, 0.1);
+                    doc.line(10, 108, 70, 108);
+                    
+                    const maxAllowedWidth = 60; 
+                    const gap = 2; 
+                    
+                    const sumOfSizes = DB.sponsors.reduce((sum, s) => sum + s.size, 0);
+                    const requestedWidth = sumOfSizes + ((DB.sponsors.length - 1) * gap);
+                    
+                    let scaleFactor = 1;
+                    if (requestedWidth > maxAllowedWidth) {
+                        scaleFactor = (maxAllowedWidth - ((DB.sponsors.length - 1) * gap)) / sumOfSizes;
+                    }
+                    
+                    let currentX = 40 - ((sumOfSizes * scaleFactor) + ((DB.sponsors.length - 1) * gap)) / 2;
+                    
+                    for(let i=0; i < DB.sponsors.length; i++) {
+                        const sponsor = DB.sponsors[i];
+                        const logoSize = sponsor.size * scaleFactor;
+
+                        try {
+                            const sDims = await pdf._getImageDimensions(sponsor.image);
+                            let sW = logoSize;
+                            let sH = sW / sDims.ratio;
+                            
+                            if(sH > logoSize) { sH = logoSize; sW = sH * sDims.ratio; }
+                            
+                            const xPos = currentX + (logoSize/2 - sW/2);
+                            const yPos = 110 + (logoSize/2 - sH/2);
+
+                            doc.addImage(sponsor.image, 'PNG', xPos, yPos, sW, sH);
+                            
+                            currentX += logoSize + gap;
+                        } catch(e) {}
+                    }
+                }
+                return doc;
+            },
+
+            _safeFilename: (name) => {
+                return name.replace(/[\/\\:*?"<>|]/g, '_');
+            },
+
+            export: async (uid, isGuest = false, guestIdx = 0, hostUid = null) => {
+                const doc = await pdf._generateDoc(uid, isGuest, guestIdx, hostUid);
+                let filename = "pass.pdf";
+                if(isGuest) {
+                    const host = DB.passes.find(x => x.uid === hostUid);
+                    const guest = host.guests[guestIdx];
+                    filename = `${pdf._safeFilename(guest.name || 'Guest')}.pdf`;
+                } else {
+                    const p = DB.passes.find(x => x.uid === uid);
+                    filename = `${pdf._safeFilename(p.name)}.pdf`;
+                }
+                doc.save(filename);
+            },
+
+            exportTeamZip: async (teamName, mode = 'all') => {
+                const members = DB.passes.filter(p => p.team === teamName);
+                if(members.length === 0) return ui.notify("No members in this squad");
+                
+                const zip = new JSZip();
+                const folderName = `${pdf._safeFilename(teamName)}_${mode}`;
+                const folder = zip.folder(folderName);
+                let count = 0;
+
+                for(let p of members) {
+                    if (mode === 'all' || mode === 'players') {
+                        const pDoc = await pdf._generateDoc(p.uid);
+                        folder.file(`${pdf._safeFilename(p.name)}.pdf`, pDoc.output('blob'));
+                        count++;
+                    }
+                    if (mode === 'all' || mode === 'guests') {
+                        if(p.guests && p.guests.length > 0) {
+                            for(let i=0; i<p.guests.length; i++) {
+                                const gName = p.guests[i].name || `Guest_${i+1}`;
+                                const gDoc = await pdf._generateDoc(p.uid, true, i, p.uid);
+                                folder.file(`${pdf._safeFilename(p.name)}_Guest_${pdf._safeFilename(gName)}.pdf`, gDoc.output('blob'));
+                                count++;
+                            }
+                        }
+                    }
+                }
+
+                if (count === 0) return ui.notify("No passes found for this selection");
+                
+                zip.generateAsync({type:"blob"}).then(c => saveAs(c, `${folderName}.zip`));
+                ui.notify(`Downloading ${count} passes...`);
+            }
+        };
+
+        const ui = {
+            refresh: () => {
+                const filterVal = document.getElementById('pass-filter')?.value || 'All';
+                
+                let renderItems = [];
+                DB.passes.forEach(p => {
+                    renderItems.push({ ...p, isGuest: false });
+                    if(p.guests) {
+                        p.guests.forEach((g, i) => {
+                            if(g.name && g.name.trim() !== '') {
+                                renderItems.push({
+                                    ...g, 
+                                    isGuest: true, 
+                                    role: 'Guest', 
+                                    hostUid: p.uid, 
+                                    guestIdx: i, 
+                                    team: p.team, 
+                                    validity: p.validity, 
+                                    nid: 'Guest of ' + p.name
+                                });
+                            }
+                        });
+                    }
+                });
+
+                if(filterVal !== 'All') {
+                    renderItems = renderItems.filter(x => x.role === filterVal);
+                }
+
+                document.getElementById('pass-table-body').innerHTML = renderItems.map(p => `
+                    <tr class="group border-b border-white/5">
+                        <td class="px-6 md:px-8 py-4 md:py-6">
+                            <div class="flex flex-col">
+                                <span class="text-white font-black text-[12px] md:text-[13px] uppercase">${p.name}</span>
+                                <span class="text-[8px] md:text-[9px] text-zinc-500 font-mono mt-1">${p.uid} • ${p.team}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 md:px-8 py-4 md:py-6">
+                            <div class="flex flex-col items-start gap-1">
+                                <span class="badge ${p.isGuest ? 'badge-spectator' : `badge-${p.role.toLowerCase()}`}">${p.role}</span>
+                                <span class="badge badge-validity">${p.validity}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 md:px-8 py-4 md:py-6 text-zinc-400 text-[9px] md:text-[10px] font-mono">${p.nid}</td>
+                        <td class="px-6 md:px-8 py-4 md:py-6 text-right">
+                            <div class="flex justify-start md:justify-end gap-2 flex-wrap opacity-100 lg:opacity-20 group-hover:opacity-100 transition-all">
+                                ${p.role === 'Player' && !p.isGuest ? `<button onclick="ui.openGuests('${p.uid}')" class="text-gold p-2 text-[9px] font-black uppercase bg-gold/10 lg:bg-transparent rounded lg:rounded-none">Guests</button>` : ''}
+                                ${!p.isGuest ? `<button onclick="passes.edit('${p.uid}')" class="text-zinc-500 p-2 text-[9px] font-black uppercase bg-white/5 lg:bg-transparent rounded lg:rounded-none">Edit</button>` : `<button onclick="ui.openGuests('${p.hostUid}')" class="text-zinc-500 p-2 text-[9px] font-black uppercase bg-white/5 lg:bg-transparent rounded lg:rounded-none">Edit Host</button>`}
+                                <button onclick="${p.isGuest ? `pdf.export('${p.hostUid}', true, ${p.guestIdx}, '${p.hostUid}')` : `pdf.export('${p.uid}')`}" class="text-gold p-2 text-[9px] font-black uppercase bg-gold/10 lg:bg-transparent rounded lg:rounded-none">PDF</button>
+                                ${!p.isGuest ? `<button onclick="passes.delete('${p.uid}')" class="text-red-500 p-2 text-[9px] font-black uppercase bg-red-500/10 lg:bg-transparent rounded lg:rounded-none">Revoke</button>` : `<button onclick="passes.deleteGuest('${p.hostUid}', '${p.uid}')" class="text-red-500 p-2 text-[9px] font-black uppercase bg-red-500/10 lg:bg-transparent rounded lg:rounded-none">Revoke</button>`}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+
+                const listCountEl = document.getElementById('list-count');
+                if (listCountEl) listCountEl.innerText = `${renderItems.length} TOTAL`;
+
+                const rev = DB.passes.reduce((s, x) => s + (x.paymentStatus === 'Paid' ? x.price : 0), 0);
+                document.getElementById('stat-count').innerText = DB.passes.length;
+                document.getElementById('stat-revenue').innerText = `${rev.toLocaleString()} EGP`;
+                document.getElementById('ana-players').innerText = DB.passes.filter(p => p.role === 'Player').length;
+                document.getElementById('ana-spectators').innerText = DB.passes.filter(p => p.role === 'Spectator').length;
+                document.getElementById('ana-revenue').innerText = `${rev.toLocaleString()} EGP`;
+                document.getElementById('ana-guests').innerText = DB.passes.reduce((s, x) => s + (x.guests?.filter(g => g.name)?.length || 0), 0);
+
+                document.getElementById('teams-grid').innerHTML = DB.teams.map(t => `
+                    <div class="glass-card p-6 md:p-8 flex flex-col h-full">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h4 class="text-white font-black uppercase text-base md:text-lg">${t}</h4>
+                                <p class="text-[9px] text-zinc-500 font-bold uppercase mt-1">${DB.passes.filter(p => p.team === t).length} Members</p>
+                            </div>
+                            <button onclick="teams.delete('${t}')" class="text-zinc-700 hover:text-red-500 text-xl md:text-2xl" title="Dissolve Team">×</button>
+                        </div>
+                        
+                        <div class="mt-auto grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <button onclick="pdf.exportTeamZip('${t}', 'players')" class="bg-zinc-800 text-zinc-400 hover:bg-gold hover:text-black py-3 md:py-2 rounded-lg text-[9px] font-black uppercase transition-all">Players</button>
+                            <button onclick="pdf.exportTeamZip('${t}', 'guests')" class="bg-zinc-800 text-zinc-400 hover:bg-gold hover:text-black py-3 md:py-2 rounded-lg text-[9px] font-black uppercase transition-all">Guests</button>
+                            <button onclick="pdf.exportTeamZip('${t}', 'all')" class="bg-zinc-800 text-gold border border-gold/20 hover:bg-gold hover:text-black py-3 md:py-2 rounded-lg text-[9px] font-black uppercase transition-all">All</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                const teamOptions = '<option value="Individual">Individual</option>' + DB.teams.map(t => `<option value="${t}">${t}</option>`).join('');
+                document.getElementById('reg-team').innerHTML = teamOptions;
+                
+                // Refresh Apps
+                eventDay.render();
+            },
+            renderSponsors: () => {
+                document.getElementById('sponsor-list').innerHTML = DB.sponsors.map((s, i) => `
+                    <div class="bg-zinc-900 border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 group">
+                        <div class="w-16 h-16 sm:w-12 sm:h-12 bg-black rounded-lg flex items-center justify-center p-1 shrink-0 relative overflow-hidden">
+                            <img src="${s.image}" class="max-w-full max-h-full object-contain">
+                        </div>
+                        <div class="flex-1 w-full">
+                            <div class="flex justify-between mb-2 sm:mb-1">
+                                <span class="text-[9px] font-black text-zinc-500 uppercase">Size</span>
+                                <span id="sponsor-size-lbl-${i}" class="text-gold text-[9px] font-black">${s.size}mm</span>
+                            </div>
+                            <input type="range" min="5" max="30" value="${s.size}" class="w-full accent-[#D4AF37] cursor-pointer" oninput="ui.tempUpdatePreview(${i}, this.value)" onchange="system.updateSponsorSize(${i}, this.value)">
+                        </div>
+                        <button onclick="system.removeSponsor(${i})" class="text-red-500 bg-red-500/10 hover:bg-red-500 hover:text-white h-10 w-full sm:w-8 sm:h-8 rounded-lg font-black text-xs uppercase transition-all shrink-0">Remove</button>
+                    </div>
+                `).join('');
+
+                const previewContainer = document.getElementById('sponsor-preview-container');
+                if(DB.sponsors.length > 0) {
+                    previewContainer.classList.remove('hidden');
+                    ui.renderSponsorPreview();
+                } else {
+                    previewContainer.classList.add('hidden');
+                }
+            },
+            tempUpdatePreview: (index, val) => {
+                document.getElementById(`sponsor-size-lbl-${index}`).innerText = `${val}mm`;
+                DB.sponsors[index].size = parseInt(val);
+                ui.renderSponsorPreview();
+            },
+            renderSponsorPreview: () => {
+                const box = document.getElementById('sponsor-preview-box');
+                box.innerHTML = DB.sponsors.map(s => {
+                    const pxSize = s.size * 3.5; 
+                    return `
+                        <div style="width: ${pxSize}px; height: ${pxSize}px; display: flex; align-items: center; justify-content: center; transition: all 0.1s ease;">
+                            <img src="${s.image}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                    `;
+                }).join('');
+            },
+            toggleBulk: () => document.getElementById('modal-bulk').classList.toggle('hidden'),
+            notify: (msg) => {
+                const hub = document.getElementById('notification-hub');
+                const id = Date.now();
+                hub.insertAdjacentHTML('beforeend', `<div id="${id}" class="glass-card border-l-4 border-gold p-6 animate-toast text-[10px] font-black uppercase text-white shadow-2xl">${msg}</div>`);
+                setTimeout(() => document.getElementById(id)?.remove(), 3500);
+            },
+            cancelEdit: () => {
+                document.getElementById('edit-uid').value = '';
+                document.getElementById('main-reg-form').reset();
+                document.getElementById('form-title').innerText = "Participant Enrollment";
+                document.getElementById('submit-btn').innerText = "Generate Pass";
+                document.getElementById('cancel-edit-btn').classList.add('hidden');
+                passes.updateUIVisibility();
+            },
+            openGuests: (uid) => {
+                const p = DB.passes.find(x => x.uid === uid);
+                document.getElementById('guest-host-name').innerText = `Host: ${p.name}`;
+                document.getElementById('guest-inputs-container').innerHTML = p.guests.map((g, i) => `
+                    <div class="bg-zinc-900/40 p-6 rounded-2xl border border-white/5">
+                        <div class="flex justify-between mb-4">
+                            <span class="text-[9px] text-zinc-600 font-bold uppercase">Guest ${i+1}</span>
+                            <button onclick="pdf.export('${p.uid}', true, ${i}, '${p.uid}')" class="text-gold text-[9px] uppercase font-black">Download PDF</button>
+                        </div>
+                        <input type="text" id="g-name-${i}" class="input-field" placeholder="Guest Name" value="${g.name || ''}" dir="auto">
+                    </div>
+                `).join('');
+                document.getElementById('save-guests-btn').onclick = () => {
+                    p.guests.forEach((g, i) => {
+                        g.name = document.getElementById(`g-name-${i}`).value.trim();
+                        if (!g.checkInStatus) g.checkInStatus = 'Pending';
+                    });
+                    system.save(); ui.closeGuests();
+                };
+                document.getElementById('modal-guests').style.display = 'flex';
+            },
+            closeGuests: () => document.getElementById('modal-guests').style.display = 'none'
+        };
+
+        // Modify showTab to handle namespaces
+        function showTab(appId, tabId) {
+            // Hide all tab contents in the specific app
+            document.querySelectorAll(`#screen-${appId} .tab-content`).forEach(c => c.classList.remove('active'));
+            // Remove active states from buttons
+            document.querySelectorAll(`#screen-${appId} .nav-btn`).forEach(b => b.classList.remove('active'));
+            
+            // Show the target
+            const tab = document.getElementById(`tab-${appId}-${tabId}`);
+            const btn = document.getElementById(`nav-${tabId}`);
+            
+            if(tab) tab.classList.add('active');
+            if(btn) btn.classList.add('active');
+
+            // If switching away from scanner, stop the camera
+            if(appId === 'attendance' && tabId !== 'scanner') {
+                scannerLogic.stop();
+            }
+        }
+
+        // BIND FUNCTIONS TO WINDOW SCOPE FOR HTML ATTRIBUTES
+        window.authLogic = authLogic;
+        window.appNav = appNav;
+        window.scannerLogic = scannerLogic;
+        window.system = system;
+        window.passes = passes;
+        window.teams = teams;
+        window.tourneyLogic = tourneyLogic;
+        window.tourneyUI = tourneyUI;
+        window.pdf = pdf;
+        window.ui = ui;
+        window.eventDay = eventDay;
+        window.showTab = showTab;
+
+        window.onload = () => {
+            system.init(); // Start fetching data instantly
+            authLogic.check();
+        };
+    </script>
+</body>
+</html>
